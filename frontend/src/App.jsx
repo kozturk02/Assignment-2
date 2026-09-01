@@ -215,30 +215,35 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>SmartFarm Crop Dashboard</h1>
+    <div className="page">
+      <h1 className="page-title">SmartFarm Crop Dashboard</h1>
 
-        <div className="app-header__stats">
+      <div className="summary-bar">
+        <div className="summary-bar__stat">
+          <span className="summary-bar__label">Status</span>
           <span className="status-badge" data-status={farmStatus}>{farmStatus}</span>
-          <span>Crop cards: {crops.length}</span>
-          <span>
-            Last sensor refresh:{' '}
+        </div>
+        <div className="summary-bar__stat">
+          <span className="summary-bar__label">Crop Cards</span>
+          <span className="summary-bar__value">{crops.length}</span>
+        </div>
+        <div className="summary-bar__stat">
+          <span className="summary-bar__label">Last Refresh</span>
+          <span className="summary-bar__value">
             {lastRefresh === 'Never' ? 'Never' : lastRefresh.toLocaleTimeString()}
           </span>
         </div>
-
-        <div className="app-header__actions">
+        <div className="summary-bar__actions">
           <button
             className="btn btn-primary"
             disabled={!sensorFeedAvailable}
             onClick={() => setShowCreateForm((prev) => !prev)}
           >
-            {showCreateForm ? 'Close Form' : 'Add Crop Card'}
+            {showCreateForm ? 'Close Form' : '+ Add Crop Card'}
           </button>
           <button className="btn" onClick={fetchReadings}>Refresh Sensor Data</button>
         </div>
-      </header>
+      </div>
 
       {readingsError && (
         <p className="error-banner" role="alert">Sensor refresh failed: {readingsError}</p>
@@ -316,133 +321,178 @@ function App() {
         <p className="empty-state">No crop cards yet. Add one to get started.</p>
       ) : (
         <div className="crop-grid">
-          {results.map(({ crop, latest_reading, condition, recommended_water, alerts, action }) => (
-            <div key={crop.id} className="crop-card" data-condition={condition}>
-              <h2 className="crop-card__title">{crop.crop_name}</h2>
-              <p className="crop-card__location">{crop.location}</p>
+          {results.map((result) => {
+            const { crop, latest_reading, condition, recommended_water, alerts, action } = result;
 
-              {editingCropId === crop.id ? (
-                <form className="crop-form" onSubmit={(e) => handleEditSubmit(e, crop.id)}>
-                  <p><em>Crop name cannot be changed.</em></p>
-                  <label>
-                    Location
-                    <input type="text" name="location" value={editForm.location} onChange={handleEditChange} required />
-                  </label>
-                  <label>
-                    Target min (%)
-                    <input type="number" name="target_min" value={editForm.target_min} onChange={handleEditChange} required />
-                  </label>
-                  <label>
-                    Target max (%)
-                    <input type="number" name="target_max" value={editForm.target_max} onChange={handleEditChange} required />
-                  </label>
-                  <label>
-                    Normal water (L)
-                    <input type="number" name="normal_water" value={editForm.normal_water} onChange={handleEditChange} required />
-                  </label>
-                  <label>
-                    Notes
-                    <textarea name="notes" value={editForm.notes} onChange={handleEditChange} />
-                  </label>
+            const measures = [`${action}.`];
+            if (typeof recommended_water === 'number') {
+              measures.push(
+                recommended_water > 0
+                  ? `Apply ${recommended_water} L of water.`
+                  : 'No irrigation needed right now.'
+              );
+            }
+            measures.push(...alerts);
 
-                  {editError && <p className="crop-form__error">{editError}</p>}
-
-                  <div className="crop-form__actions">
-                    <button type="submit" className="btn btn-primary" disabled={updating}>
-                      {updating ? 'Saving...' : 'Save Changes'}
-                    </button>
-                    <button type="button" className="btn" onClick={handleEditCancel}>
-                      Cancel
-                    </button>
+            return (
+              <div key={crop.id} className="crop-card">
+                <div className="crop-card__header">
+                  <div>
+                    <h2 className="crop-card__title">{crop.crop_name}</h2>
+                    <p className="crop-card__location">{crop.location}</p>
                   </div>
-                </form>
-              ) : (
-                <>
-                  {latest_reading ? (
-                    <>
-                      <p>Latest: {latest_reading.timestamp}</p>
-                      <p className="crop-card__reading-row">
-                        <span>Moisture: {latest_reading.soil_moisture}%</span>
-                        <span>Temp: {latest_reading.temperature}&deg;C</span>
-                        <span>Rainfall: {latest_reading.rainfall}mm</span>
-                      </p>
-                    </>
-                  ) : (
-                    <p>No sensor reading available</p>
-                  )}
-
-                  <p className="crop-card__condition">Condition: {condition}</p>
-                  <p>
-                    Recommended water:{' '}
-                    {recommended_water === 'N/A' ? 'N/A' : `${recommended_water} L`}
-                  </p>
-
-                  {alerts.length > 0 && (
-                    <ul className="crop-card__alerts">
-                      {alerts.map((alert) => (
-                        <li key={alert}>{alert}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <p>Action: {action}</p>
-                  <p>
-                    Target: {crop.target_min}&ndash;{crop.target_max}% &middot; Normal water: {crop.normal_water} L
-                  </p>
-                  {crop.notes && <p>{crop.notes}</p>}
-
-                  <div className="crop-card__actions">
-                    <button className="btn" onClick={() => handleEditClick(crop)}>
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleDelete(crop)}
-                      disabled={deletingId === crop.id}
-                    >
-                      {deletingId === crop.id ? 'Deleting...' : 'Delete'}
-                    </button>
-                    <button className="btn" onClick={() => handleHistoryToggle(crop)}>
-                      {historyCropName === crop.crop_name ? 'Hide Sensor History' : 'View Sensor History'}
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {historyCropName === crop.crop_name && (
-                <div className="sensor-history">
-                  <h3>Sensor History &mdash; {crop.crop_name}</h3>
-                  <ul className="sensor-history__list">
-                    {readings
-                      .filter((r) => r.crop_name === crop.crop_name)
-                      .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-                      .map((reading) => {
-                        const historyResult = analyseCrop(crop, reading);
-                        return (
-                          <li
-                            key={reading.timestamp}
-                            className="sensor-history__item"
-                            data-condition={historyResult.condition}
-                          >
-                            <p>{reading.timestamp} &middot; {reading.sensor_status}</p>
-                            <p>
-                              Moisture: {reading.soil_moisture}% &middot; Temp: {reading.temperature}&deg;C &middot; Rainfall: {reading.rainfall}mm
-                            </p>
-                            <p>
-                              Condition: {historyResult.condition} &middot; Action: {historyResult.action}
-                            </p>
-                            {historyResult.alerts.length > 0 && (
-                              <p>Alerts: {historyResult.alerts.join(', ')}</p>
-                            )}
-                            {reading.notes && <p><em>{reading.notes}</em></p>}
-                          </li>
-                        );
-                      })}
-                  </ul>
+                  <span className="status-badge" data-condition={condition}>{condition}</span>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {editingCropId === crop.id ? (
+                  <form className="crop-form" onSubmit={(e) => handleEditSubmit(e, crop.id)}>
+                    <p><em>Crop name cannot be changed.</em></p>
+                    <label>
+                      Location
+                      <input type="text" name="location" value={editForm.location} onChange={handleEditChange} required />
+                    </label>
+                    <label>
+                      Target min (%)
+                      <input type="number" name="target_min" value={editForm.target_min} onChange={handleEditChange} required />
+                    </label>
+                    <label>
+                      Target max (%)
+                      <input type="number" name="target_max" value={editForm.target_max} onChange={handleEditChange} required />
+                    </label>
+                    <label>
+                      Normal water (L)
+                      <input type="number" name="normal_water" value={editForm.normal_water} onChange={handleEditChange} required />
+                    </label>
+                    <label>
+                      Notes
+                      <textarea name="notes" value={editForm.notes} onChange={handleEditChange} />
+                    </label>
+
+                    {editError && <p className="crop-form__error">{editError}</p>}
+
+                    <div className="crop-form__actions">
+                      <button type="submit" className="btn btn-primary" disabled={updating}>
+                        {updating ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button type="button" className="btn" onClick={handleEditCancel}>
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="crop-card__columns">
+                      <div className="crop-card__column">
+                        <h3>Information</h3>
+                        <p className="info-line">
+                          <span className="info-line__label">Target Range:</span>
+                          {crop.target_min}&ndash;{crop.target_max}%
+                        </p>
+                        <p className="info-line">
+                          <span className="info-line__label">Normal Water:</span>
+                          {crop.normal_water} L
+                        </p>
+                        {crop.notes && (
+                          <p className="info-line">
+                            <span className="info-line__label">Notes:</span>
+                            {crop.notes}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="crop-card__column">
+                        <h3>Latest Readings</h3>
+                        {latest_reading ? (
+                          <>
+                            <div className="reading-row">
+                              <span className="reading-row__label">Latest</span>
+                              <span className="reading-row__value">{latest_reading.timestamp}</span>
+                            </div>
+                            <div className="reading-row">
+                              <span className="reading-row__label">Soil Moisture</span>
+                              <span className="reading-row__value">{latest_reading.soil_moisture}%</span>
+                            </div>
+                            <div className="reading-row">
+                              <span className="reading-row__label">Temperature</span>
+                              <span className="reading-row__value">{latest_reading.temperature} &deg;C</span>
+                            </div>
+                            <div className="reading-row">
+                              <span className="reading-row__label">Rainfall</span>
+                              <span className="reading-row__value">{latest_reading.rainfall} mm</span>
+                            </div>
+                            <div className="reading-row">
+                              <span className="reading-row__label">Sensor</span>
+                              <span className="reading-row__value">{latest_reading.sensor_status}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="info-line">No data</p>
+                        )}
+                      </div>
+
+                      <div className="crop-card__column">
+                        <h3>Corrective Measures</h3>
+                        <ul className="measures-list">
+                          {measures.map((measure, i) => (
+                            <li key={i}>{measure}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="crop-card__actions">
+                      <button className="btn" onClick={() => handleEditClick(crop)}>
+                        Modify
+                      </button>
+                      <button className="btn" onClick={() => handleHistoryToggle(crop)}>
+                        {historyCropName === crop.crop_name ? 'Hide History' : 'View History'}
+                      </button>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => handleDelete(crop)}
+                        disabled={deletingId === crop.id}
+                      >
+                        {deletingId === crop.id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {historyCropName === crop.crop_name && (
+                  <div className="sensor-history">
+                    <h3>Sensor History &mdash; {crop.crop_name}</h3>
+                    <ul className="sensor-history__list">
+                      {readings
+                        .filter((r) => r.crop_name === crop.crop_name)
+                        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+                        .map((reading) => {
+                          const historyResult = analyseCrop(crop, reading);
+                          return (
+                            <li
+                              key={reading.timestamp}
+                              className="sensor-history__item"
+                              data-condition={historyResult.condition}
+                            >
+                              <p>{reading.timestamp} &middot; {reading.sensor_status}</p>
+                              <p>
+                                Moisture: {reading.soil_moisture}% &middot; Temp: {reading.temperature}&deg;C &middot; Rainfall: {reading.rainfall}mm
+                              </p>
+                              <p>
+                                Condition: {historyResult.condition} &middot; Action: {historyResult.action}
+                              </p>
+                              {historyResult.alerts.length > 0 && (
+                                <p>Alerts: {historyResult.alerts.join(', ')}</p>
+                              )}
+                              {reading.notes && <p><em>{reading.notes}</em></p>}
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
