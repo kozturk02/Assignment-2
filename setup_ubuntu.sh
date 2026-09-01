@@ -37,8 +37,7 @@ section() {
 require_project_files() {
   local missing=0
   local required=(
-    "backend/server.js" "backend/db.js" "backend/package.json"
-    "backend/data/sensor-readings.json"
+    "backend/index.js" "backend/db.js" "backend/package.json"
     "frontend/package.json" "frontend/index.html" "frontend/src/App.jsx" "frontend/src/App.css"
     "frontend/src/utils/analysis.js" "frontend/src/services/api.js"
     "run_backend.sh" "run_frontend.sh"
@@ -110,8 +109,8 @@ section "Step 4 of 5: Install frontend dependencies"
 (cd frontend && npm install)
 
 section "Step 5 of 5: Validate backend, database, and frontend build"
-node --check backend/server.js
-echo "backend/server.js: syntax OK"
+node --check backend/index.js
+echo "backend/index.js: syntax OK"
 
 (
   cd backend
