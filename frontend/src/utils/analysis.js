@@ -26,3 +26,22 @@ export function analyseCrop(cropCard, reading) {
     action
   };
 }
+
+export function calculateFarmStatus(results) {
+  if (results.length === 0) return 'No Crops';
+
+  const hasCritical = results.some(
+    (r) => r.condition === 'Sensor Problem' || r.condition === 'Invalid Data'
+  );
+  if (hasCritical) return 'Critical';
+
+  const hasWatch = results.some(
+    (r) =>
+      r.condition === 'Dry' ||
+      r.condition === 'Too Wet' ||
+      r.alerts.includes('High temperature')
+  );
+  if (hasWatch) return 'Watch';
+
+  return 'Normal';
+}
