@@ -391,3 +391,91 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- modal (Add / Edit Crop Card) --- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 21, 26, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+}
+
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.modal__header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 2px;
+}
+
+.modal__subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+.modal__close:hover {
+  color: var(--text-heading);
+}
+
+.crop-form--modal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: none;
+  margin-bottom: 0;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.crop-form--modal .full-width {
+  grid-column: 1 / -1;
+}
+
+.crop-form--modal .crop-form__actions {
+  justify-content: flex-end;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: help;
+  margin-left: 4px;
+}
+
+@media (max-width: 480px) {
+  .crop-form--modal {
+    grid-template-columns: 1fr;
+  }
+}

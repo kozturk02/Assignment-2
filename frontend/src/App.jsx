@@ -72,6 +72,18 @@ function App() {
     fetchReadings();
   }, []);
 
+  // Escape closes whichever modal is currently open.
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key !== 'Escape') return;
+      setShowCreateForm(false);
+      setEditingCropId(null);
+      setEditForm(null);
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const results = (crops ?? []).map((crop) => {
     const reading = getLatestReading(crop.crop_name, readings);
     return { crop, latest_reading: reading, ...analyseCrop(crop, reading) };
@@ -86,12 +98,19 @@ function App() {
   }
 
   const availableCropNames = crops !== null ? getAvailableCropNames(readings, crops) : [];
+  const editingCrop = crops?.find((c) => c.id === editingCropId) ?? null;
 
   // ---------- Create ----------
 
   function handleCreateChange(e) {
     const { name, value } = e.target;
     setCreateForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function closeCreateModal() {
+    setShowCreateForm(false);
+    setCreateForm(EMPTY_CREATE_FORM);
+    setCreateError(null);
   }
 
   async function handleCreateSubmit(e) {
@@ -116,8 +135,7 @@ function App() {
     try {
       await createCrop(payload);
       await fetchCrops();
-      setCreateForm(EMPTY_CREATE_FORM);
-      setShowCreateForm(false);
+      closeCreateModal();
     } catch (err) {
       setCreateError(err.message);
     } finally {
@@ -144,7 +162,7 @@ function App() {
     setEditForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleEditCancel() {
+  function closeEditModal() {
     setEditingCropId(null);
     setEditForm(null);
     setEditError(null);
@@ -166,8 +184,7 @@ function App() {
     try {
       await updateCrop(cropId, payload);
       await fetchCrops();
-      setEditingCropId(null);
-      setEditForm(null);
+      closeEditModal();
     } catch (err) {
       setEditError(err.message);
     } finally {
@@ -237,9 +254,9 @@ function App() {
           <button
             className="btn btn-primary"
             disabled={!sensorFeedAvailable}
-            onClick={() => setShowCreateForm((prev) => !prev)}
+            onClick={() => setShowCreateForm(true)}
           >
-            {showCreateForm ? 'Close Form' : '+ Add Crop Card'}
+            + Add Crop Card
           </button>
           <button className="btn" onClick={fetchReadings}>Refresh Sensor Data</button>
         </div>
@@ -252,69 +269,118 @@ function App() {
         <p className="error-banner" role="alert">Delete failed: {deleteError}</p>
       )}
 
+      {/* ---------- Add Crop Card modal ---------- */}
       {showCreateForm && (
-        <form className="crop-form" onSubmit={handleCreateSubmit}>
-          <label>
-            Crop
-            <select
-              name="crop_name"
-              value={createForm.crop_name}
-              onChange={handleCreateChange}
-              required
-            >
-              <option value="" disabled>Select a crop</option>
-              {availableCropNames.map((name) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-          </label>
+        <div className="modal-overlay" onClick={closeCreateModal}>
+          <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2>Add Crop Card</h2>
+              <button className="modal__close" onClick={closeCreateModal} aria-label="Close">&times;</button>
+            </div>
 
-          {availableCropNames.length === 0 && (
-            <p className="crop-form__error">
-              No crop names available -- every crop in the sensor feed already has a card.
-            </p>
-          )}
+            <form className="crop-form crop-form--modal" onSubmit={handleCreateSubmit}>
+              <label>
+                Crop Name
+                <select name="crop_name" value={createForm.crop_name} onChange={handleCreateChange} required>
+                  <option value="" disabled>Select a crop</option>
+                  {availableCropNames.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </label>
 
-          <label>
-            Location
-            <input type="text" name="location" value={createForm.location} onChange={handleCreateChange} required />
-          </label>
-          <label>
-            Target min (%)
-            <input type="number" name="target_min" value={createForm.target_min} onChange={handleCreateChange} required />
-          </label>
-          <label>
-            Target max (%)
-            <input type="number" name="target_max" value={createForm.target_max} onChange={handleCreateChange} required />
-          </label>
-          <label>
-            Normal water (L)
-            <input type="number" name="normal_water" value={createForm.normal_water} onChange={handleCreateChange} required />
-          </label>
-          <label>
-            Notes
-            <textarea name="notes" value={createForm.notes} onChange={handleCreateChange} />
-          </label>
+              <label>
+                Location
+                <input type="text" name="location" placeholder="e.g., Greenhouse 1" value={createForm.location} onChange={handleCreateChange} required />
+              </label>
 
-          {createError && <p className="crop-form__error">{createError}</p>}
+              <label>
+                Target Min (%)
+                <input type="number" name="target_min" placeholder="e.g., 20" value={createForm.target_min} onChange={handleCreateChange} required />
+              </label>
 
-          <div className="crop-form__actions">
-            <button type="submit" className="btn btn-primary" disabled={creating}>
-              {creating ? 'Saving...' : 'Save Crop Card'}
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => {
-                setShowCreateForm(false);
-                setCreateForm(EMPTY_CREATE_FORM);
-                setCreateError(null);
-              }}
-            >
-              Cancel
-            </button>
+              <label>
+                Target Max (%)
+                <input type="number" name="target_max" placeholder="e.g., 80" value={createForm.target_max} onChange={handleCreateChange} required />
+              </label>
+
+              <label className="full-width">
+                Normal Water (L)
+                <input type="number" name="normal_water" placeholder="e.g., 500" value={createForm.normal_water} onChange={handleCreateChange} required />
+              </label>
+
+              <label className="full-width">
+                Notes
+                <textarea name="notes" placeholder="Add any notes about this crop..." value={createForm.notes} onChange={handleCreateChange} />
+              </label>
+
+              {availableCropNames.length === 0 && (
+                <p className="crop-form__error full-width">
+                  No crop names available -- every crop in the sensor feed already has a card.
+                </p>
+              )}
+              {createError && <p className="crop-form__error full-width">{createError}</p>}
+
+              <div className="crop-form__actions full-width">
+                <button type="button" className="btn" onClick={closeCreateModal}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={creating}>
+                  {creating ? 'Saving...' : 'Save Crop Card'}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
+      )}
+
+      {/* ---------- Edit Crop Card modal ---------- */}
+      {editingCrop && editForm && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="modal__header">
+              <div>
+                <h2>Edit Crop Card</h2>
+                <p className="modal__subtitle">{editingCrop.crop_name} (name cannot be changed)</p>
+              </div>
+              <button className="modal__close" onClick={closeEditModal} aria-label="Close">&times;</button>
+            </div>
+
+            <form className="crop-form crop-form--modal" onSubmit={(e) => handleEditSubmit(e, editingCrop.id)}>
+              <label className="full-width">
+                Location
+                <input type="text" name="location" value={editForm.location} onChange={handleEditChange} required />
+              </label>
+
+              <label>
+                Target Min (%)
+                <input type="number" name="target_min" value={editForm.target_min} onChange={handleEditChange} required />
+              </label>
+
+              <label>
+                Target Max (%)
+                <input type="number" name="target_max" value={editForm.target_max} onChange={handleEditChange} required />
+              </label>
+
+              <label className="full-width">
+                Normal Water (L)
+                <input type="number" name="normal_water" value={editForm.normal_water} onChange={handleEditChange} required />
+              </label>
+
+              <label className="full-width">
+                Notes
+                <textarea name="notes" value={editForm.notes} onChange={handleEditChange} />
+              </label>
+
+              {editError && <p className="crop-form__error full-width">{editError}</p>}
+
+              <div className="crop-form__actions full-width">
+                <button type="button" className="btn" onClick={closeEditModal}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={updating}>
+                  {updating ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {crops.length === 0 ? (
@@ -344,119 +410,80 @@ function App() {
                   <span className="status-badge" data-condition={condition}>{condition}</span>
                 </div>
 
-                {editingCropId === crop.id ? (
-                  <form className="crop-form" onSubmit={(e) => handleEditSubmit(e, crop.id)}>
-                    <p><em>Crop name cannot be changed.</em></p>
-                    <label>
-                      Location
-                      <input type="text" name="location" value={editForm.location} onChange={handleEditChange} required />
-                    </label>
-                    <label>
-                      Target min (%)
-                      <input type="number" name="target_min" value={editForm.target_min} onChange={handleEditChange} required />
-                    </label>
-                    <label>
-                      Target max (%)
-                      <input type="number" name="target_max" value={editForm.target_max} onChange={handleEditChange} required />
-                    </label>
-                    <label>
-                      Normal water (L)
-                      <input type="number" name="normal_water" value={editForm.normal_water} onChange={handleEditChange} required />
-                    </label>
-                    <label>
-                      Notes
-                      <textarea name="notes" value={editForm.notes} onChange={handleEditChange} />
-                    </label>
+                <div className="crop-card__columns">
+                  <div className="crop-card__column">
+                    <h3>Information</h3>
+                    <p className="info-line">
+                      <span className="info-line__label">Target Range:</span>
+                      {crop.target_min}&ndash;{crop.target_max}%
+                    </p>
+                    <p className="info-line">
+                      <span className="info-line__label">Normal Water:</span>
+                      {crop.normal_water} L
+                    </p>
+                    {crop.notes && (
+                      <p className="info-line">
+                        <span className="info-line__label">Notes:</span>
+                        {crop.notes}
+                      </p>
+                    )}
+                  </div>
 
-                    {editError && <p className="crop-form__error">{editError}</p>}
+                  <div className="crop-card__column">
+                    <h3>Latest Readings</h3>
+                    {latest_reading ? (
+                      <>
+                        <div className="reading-row">
+                          <span className="reading-row__label">Latest</span>
+                          <span className="reading-row__value">{latest_reading.timestamp}</span>
+                        </div>
+                        <div className="reading-row">
+                          <span className="reading-row__label">Soil Moisture</span>
+                          <span className="reading-row__value">{latest_reading.soil_moisture}%</span>
+                        </div>
+                        <div className="reading-row">
+                          <span className="reading-row__label">Temperature</span>
+                          <span className="reading-row__value">{latest_reading.temperature} &deg;C</span>
+                        </div>
+                        <div className="reading-row">
+                          <span className="reading-row__label">Rainfall</span>
+                          <span className="reading-row__value">{latest_reading.rainfall} mm</span>
+                        </div>
+                        <div className="reading-row">
+                          <span className="reading-row__label">Sensor</span>
+                          <span className="reading-row__value">{latest_reading.sensor_status}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="info-line">No data</p>
+                    )}
+                  </div>
 
-                    <div className="crop-form__actions">
-                      <button type="submit" className="btn btn-primary" disabled={updating}>
-                        {updating ? 'Saving...' : 'Save Changes'}
-                      </button>
-                      <button type="button" className="btn" onClick={handleEditCancel}>
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <>
-                    <div className="crop-card__columns">
-                      <div className="crop-card__column">
-                        <h3>Information</h3>
-                        <p className="info-line">
-                          <span className="info-line__label">Target Range:</span>
-                          {crop.target_min}&ndash;{crop.target_max}%
-                        </p>
-                        <p className="info-line">
-                          <span className="info-line__label">Normal Water:</span>
-                          {crop.normal_water} L
-                        </p>
-                        {crop.notes && (
-                          <p className="info-line">
-                            <span className="info-line__label">Notes:</span>
-                            {crop.notes}
-                          </p>
-                        )}
-                      </div>
+                  <div className="crop-card__column">
+                    <h3>Corrective Measures</h3>
+                    <ul className="measures-list">
+                      {measures.map((measure, i) => (
+                        <li key={i}>{measure}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
 
-                      <div className="crop-card__column">
-                        <h3>Latest Readings</h3>
-                        {latest_reading ? (
-                          <>
-                            <div className="reading-row">
-                              <span className="reading-row__label">Latest</span>
-                              <span className="reading-row__value">{latest_reading.timestamp}</span>
-                            </div>
-                            <div className="reading-row">
-                              <span className="reading-row__label">Soil Moisture</span>
-                              <span className="reading-row__value">{latest_reading.soil_moisture}%</span>
-                            </div>
-                            <div className="reading-row">
-                              <span className="reading-row__label">Temperature</span>
-                              <span className="reading-row__value">{latest_reading.temperature} &deg;C</span>
-                            </div>
-                            <div className="reading-row">
-                              <span className="reading-row__label">Rainfall</span>
-                              <span className="reading-row__value">{latest_reading.rainfall} mm</span>
-                            </div>
-                            <div className="reading-row">
-                              <span className="reading-row__label">Sensor</span>
-                              <span className="reading-row__value">{latest_reading.sensor_status}</span>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="info-line">No data</p>
-                        )}
-                      </div>
-
-                      <div className="crop-card__column">
-                        <h3>Corrective Measures</h3>
-                        <ul className="measures-list">
-                          {measures.map((measure, i) => (
-                            <li key={i}>{measure}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="crop-card__actions">
-                      <button className="btn" onClick={() => handleEditClick(crop)}>
-                        Modify
-                      </button>
-                      <button className="btn" onClick={() => handleHistoryToggle(crop)}>
-                        {historyCropName === crop.crop_name ? 'Hide History' : 'View History'}
-                      </button>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => handleDelete(crop)}
-                        disabled={deletingId === crop.id}
-                      >
-                        {deletingId === crop.id ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
-                  </>
-                )}
+                <div className="crop-card__actions">
+                  <button className="btn" onClick={() => handleEditClick(crop)}>
+                    Modify
+                  </button>
+                  <button className="btn" onClick={() => handleHistoryToggle(crop)}>
+                    {historyCropName === crop.crop_name ? 'Hide History' : 'View History'}
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleDelete(crop)}
+                    disabled={deletingId === crop.id}
+                  >
+                    {deletingId === crop.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
 
                 {historyCropName === crop.crop_name && (
                   <div className="sensor-history">
