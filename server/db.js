@@ -16,4 +16,25 @@ CREATE TABLE IF NOT EXISTS crops (
 );
 `);
 
+const { count } = db.prepare('SELECT COUNT(*) AS count FROM crops').get();
+
+if (count === 0) {
+  const insert = db.prepare(`
+    INSERT INTO crops (crop_name, location, target_min, target_max, normal_water)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  const seedCrops = [
+    ['Tomato', 'Greenhouse A', 55, 75, 500],
+    ['Lettuce', 'Greenhouse B', 60, 80, 400],
+    ['Wheat', 'North Field', 35, 55, 300],
+  ];
+
+  const insertMany = db.transaction((rows) => {
+    for (const row of rows) insert.run(...row);
+  });
+
+  insertMany(seedCrops);
+}
+
 module.exports = db;

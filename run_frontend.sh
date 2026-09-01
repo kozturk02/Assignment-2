@@ -19,5 +19,5 @@ echo
 echo "Press Ctrl + C to stop the frontend."
 echo
 
-cd client
+cd frontend
 npm run dev -- --host 0.0.0.0
