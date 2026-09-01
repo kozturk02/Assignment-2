@@ -17,7 +17,7 @@ function validateCropData(data) {
         || data.target_min >= data.target_max
         || typeof data.normal_water !== 'number' || data.normal_water <= 0 || data.normal_water > 10000
         || (data.notes !== undefined && (typeof data.notes !== 'string' || data.notes.length > 500))) {
-    return res.status(400).json({ error: 'Invalid crop data' });
+    return true;
   }
 }
 
@@ -34,7 +34,7 @@ app.post('/api/crops', (req, res) => {
 
   const validationError = validateCropData({ crop_name, location, target_min, target_max, normal_water, notes });
   if (validationError) {
-    return validationError;
+    return res.status(400).json({ error: 'Invalid crop data' });
   }
 
   try {
@@ -97,7 +97,7 @@ app.put('/api/crops/:id', (req, res) => {
 
   const validationError = validateCropData({ crop_name, location, target_min, target_max, normal_water, notes });
   if (validationError) {
-    return validationError;
+    return res.status(400).json({ error: 'Invalid crop data' });
   }
 
   try {
