@@ -9,16 +9,23 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-function validateCropData(data) {
+function validateCropAdd(data) {
   if (typeof data.crop_name !== 'string' || data.crop_name.trim() === ''
-        || typeof data.location !== 'string' || data.location.length < 1 || data.location.length > 100
+        || validateCropFields(data)) {
+    return true;
+  }
+}
+
+function validateCropUpdate(data) {
+  if (typeof data.location !== 'string' || data.location.length < 1 || data.location.length > 100
         || typeof data.target_min !== 'number' || data.target_min < 0 || data.target_min > 100
         || typeof data.target_max !== 'number' || data.target_max < 0 || data.target_max > 100
         || data.target_min >= data.target_max
         || typeof data.normal_water !== 'number' || data.normal_water <= 0 || data.normal_water > 10000
         || (data.notes !== undefined && (typeof data.notes !== 'string' || data.notes.length > 500))) {
-    return res.status(400).json({ error: 'Invalid crop data' });
+    return true;
   }
+  return false;
 }
 
 // CREATE
@@ -32,9 +39,9 @@ app.post('/api/crops', (req, res) => {
     notes,
   } = req.body;
 
-  const validationError = validateCropData({ crop_name, location, target_min, target_max, normal_water, notes });
+  const validationError = validateCropAdd({ crop_name, location, target_min, target_max, normal_water, notes });
   if (validationError) {
-    return validationError;
+    return res.status(400).json({ error: 'Invalid crop data' });
   }
 
   try {
@@ -95,9 +102,9 @@ app.put('/api/crops/:id', (req, res) => {
     notes,
   } = req.body;
 
-  const validationError = validateCropData({ crop_name, location, target_min, target_max, normal_water, notes });
+  const validationError = validateCropUpdate({ crop_name, location, target_min, target_max, normal_water, notes });
   if (validationError) {
-    return validationError;
+    return res.status(400).json({ error: 'Invalid crop data' });
   }
 
   try {
