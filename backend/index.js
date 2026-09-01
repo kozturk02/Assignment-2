@@ -109,12 +109,11 @@ app.put('/api/crops/:id', (req, res) => {
   try {
     const stmt = db.prepare(`
       UPDATE crops SET
-        crop_name = ?, location = ?,
+        location = ?,
         target_min = ?, target_max = ?,
         normal_water = ?, notes = ? WHERE id = ?`);
 
     const result = stmt.run(
-      crop_name,
       location,
       target_min,
       target_max,
