@@ -20,7 +20,7 @@ function validateCropData(data) {
 }
 
 // CREATE
-app.post('/smartfarm', (req, res) => {
+app.post('/api/crops', (req, res) => {
   const {
     crop_name,
     location,
@@ -64,13 +64,13 @@ app.post('/smartfarm', (req, res) => {
 });
 
 // READ all
-app.get('/crops', (req, res) => {
+app.get('/api/crops', (req, res) => {
   const records = db.prepare('SELECT * FROM crops').all();
   res.json(records);
 });
 
 // READ one
-app.get('/crops/:id', (req, res) => {
+app.get('/api/crops/:id', (req, res) => {
   const record = db
     .prepare('SELECT * FROM crops WHERE id = ?')
     .get(req.params.id);
@@ -83,7 +83,7 @@ app.get('/crops/:id', (req, res) => {
 });
 
 // UPDATE
-app.put('/crops/:id', (req, res) => {
+app.put('/api/crops/:id', (req, res) => {
   const {
     crop_name,
     location,
@@ -130,7 +130,7 @@ app.put('/crops/:id', (req, res) => {
 });
 
 // DELETE
-app.delete('/crops/:id', (req, res) => {
+app.delete('/api/crops/:id', (req, res) => {
   const stmt = db.prepare('DELETE FROM crops WHERE id = ?');
   const result = stmt.run(req.params.id);
 
@@ -139,6 +139,16 @@ app.delete('/crops/:id', (req, res) => {
   }
 
   res.status(204).send();
+});
+
+app.get('/api/readings', (req, res) => {
+  try {
+    const readings = readValidatedReadings();
+    res.status(200).json(readings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Sensor data file is invalid' });
+  }
 });
 
 app.listen(PORT, () => {
