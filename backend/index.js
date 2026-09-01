@@ -11,7 +11,7 @@ app.use(express.json());
 
 function validateCropAdd(data) {
   if (typeof data.crop_name !== 'string' || data.crop_name.trim() === ''
-        || validateCropFields(data)) {
+        || validateCropUpdate(data)) {
     return true;
   }
 }
@@ -94,7 +94,6 @@ app.get('/api/crops/:id', (req, res) => {
 // UPDATE
 app.put('/api/crops/:id', (req, res) => {
   const {
-    crop_name,
     location,
     target_min,
     target_max,
@@ -102,7 +101,7 @@ app.put('/api/crops/:id', (req, res) => {
     notes,
   } = req.body;
 
-  const validationError = validateCropUpdate({ crop_name, location, target_min, target_max, normal_water, notes });
+  const validationError = validateCropUpdate({ location, target_min, target_max, normal_water, notes });
   if (validationError) {
     return res.status(400).json({ error: 'Invalid crop data' });
   }
