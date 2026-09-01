@@ -37,15 +37,16 @@ section() {
 require_project_files() {
   local missing=0
   local required=(
-    "server/index.js" "server/db.js" "server/errorMsgConfig.js" "server/package.json"
-    "client/package.json" "client/index.html" "client/src/App.jsx" "client/src/App.css"
-    "client/src/QuoteModal.jsx" "client/src/calculateQuote.js" "client/src/pricingConfig.js"
+    "backend/server.js" "backend/db.js" "backend/package.json"
+    "backend/data/sensor-readings.json"
+    "frontend/package.json" "frontend/index.html" "frontend/src/App.jsx" "frontend/src/App.css"
+    "frontend/src/utils/analysis.js" "frontend/src/services/api.js"
     "run_backend.sh" "run_frontend.sh"
   )
   for file in "${required[@]}"; do
     [[ -f "$file" ]] || { echo "Missing required project file: $file" >&2; missing=1; }
   done
-  [[ $missing -eq 0 ]] || { echo "Run this script from the HealthCoverSim project root." >&2; exit 1; }
+  [[ $missing -eq 0 ]] || { echo "Run this script from the SmartFarm project root." >&2; exit 1; }
 }
 
 node_major() { node -p 'Number(process.versions.node.split(".")[0])' 2>/dev/null || echo 0; }
@@ -87,7 +88,7 @@ ensure_build_tools() {
   fi
 }
 
-section "HealthCoverSim Setup"
+section "SmartFarm Crop Dashboard Setup"
 echo "Project directory: $SCRIPT_DIR"
 echo "Frontend: React + Vite"
 echo "Backend:  Node.js + Express"
@@ -103,34 +104,34 @@ section "Step 2 of 5: Ensure native module build tools"
 ensure_build_tools
 
 section "Step 3 of 5: Install backend dependencies"
-(cd server && npm install)
+(cd backend && npm install)
 
 section "Step 4 of 5: Install frontend dependencies"
-(cd client && npm install)
+(cd frontend && npm install)
 
 section "Step 5 of 5: Validate backend, database, and frontend build"
-node --check server/index.js
-echo "server/index.js: syntax OK"
+node --check backend/server.js
+echo "backend/server.js: syntax OK"
 
 (
-  cd server
+  cd backend
   node -e '
     const db = require("./db.js");
-    const columns = db.prepare("PRAGMA table_info(records)").all().map((c) => c.name);
-    const required = ["id", "customer_name", "cover_type", "applicant_1_age", "hospital_cover_level", "payment_frequency", "created_at"];
+    const columns = db.prepare("PRAGMA table_info(crops)").all().map((c) => c.name);
+    const required = ["id", "crop_name", "location", "target_min", "target_max", "normal_water", "notes", "created_at"];
     const missing = required.filter((c) => !columns.includes(c));
     if (missing.length > 0) {
       console.error("Missing expected columns:", missing.join(", "));
       process.exit(1);
     }
-    console.log("records table columns:", columns.join(", "));
+    console.log("crops table columns:", columns.join(", "));
   '
 )
-echo "records.db: schema OK"
+echo "smartfarm.db: schema OK"
 
-(cd client && npm run build)
-echo "client build: OK"
-rm -rf client/dist
+(cd frontend && npm run build)
+echo "frontend build: OK"
+rm -rf frontend/dist
 
 chmod +x setup_ubuntu.sh run_backend.sh run_frontend.sh 2>/dev/null || true
 
@@ -147,7 +148,8 @@ Terminal 2:
 Browser:
   http://localhost:5173
 
-server/records.db was created automatically and is safe to delete any
-time -- it is rebuilt automatically the next time the backend starts.
-Existing rows are never dropped by this script, unlike a full reset.
+backend/data/smartfarm.db was created automatically. Deleting it is safe --
+it is rebuilt and reseeded (Tomato, Lettuce, Wheat) the next time the
+backend starts. Maize is not seeded; create it through the UI. Existing
+rows are never dropped by this script, unlike a full reset.
 HELP
