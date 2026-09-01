@@ -1,4 +1,4 @@
-function getAvailableCropNames(readings, crops) {
+export function getAvailableCropNames(readings, crops) {
   const existingCropNames = new Set(crops.map((crop) => crop.crop_name));
   const availableCropNames = readings
     .map((reading) => reading.crop_name)
@@ -6,7 +6,7 @@ function getAvailableCropNames(readings, crops) {
   return Array.from(new Set(availableCropNames));
 }
 
-function getLatestReading(cropName, readings) {
+export function getLatestReading(cropName, readings) {
   const matches = readings.filter((r) => r.crop_name === cropName);
   if (matches.length === 0) return null;
   return matches.reduce((latest, current) =>
