@@ -3,7 +3,6 @@ const cors = require('cors');
 const db = require('./db');
 const app = express();
 const PORT = 3001;
-const msgConfig = require('../config.json');
 
 app.use(cors());
 app.use(express.json());
@@ -16,7 +15,7 @@ function validateCropData(data) {
         || data.target_min >= data.target_max
         || typeof data.normal_water !== 'number' || data.normal_water <= 0 || data.normal_water > 10000
         || (data.notes !== undefined && (typeof data.notes !== 'string' || data.notes.length > 500))) {
-    return res.status(400).json({ error: msgConfig.ERROR });
+    return res.status(400).json({ error: 'Invalid crop data' });
   }
 }
 
@@ -77,7 +76,7 @@ app.get('/crops/:id', (req, res) => {
     .get(req.params.id);
 
   if (!record) {
-    return res.status(404).json({ error: msgConfig.NOT_FOUND });
+    return res.status(404).json({ error: 'Crop not found' });
   }
 
   res.json(record);
@@ -117,7 +116,7 @@ app.put('/crops/:id', (req, res) => {
     );
 
     if (result.changes === 0) {
-      return res.status(404).json({ error: msgConfig.NOT_FOUND });
+      return res.status(404).json({ error: 'Crop not found' });
     }
 
     const updated = db
@@ -136,7 +135,7 @@ app.delete('/crops/:id', (req, res) => {
   const result = stmt.run(req.params.id);
 
   if (result.changes === 0) {
-    return res.status(404).json({ error: msgConfig.NOT_FOUND });
+    return res.status(404).json({ error: 'Crop not found' });
   }
 
   res.status(204).send();
