@@ -91,7 +91,7 @@ body {
 }
 
 .status-badge {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: bold;
 }
 
@@ -401,4 +401,14 @@ body {
   .full-width {
     grid-column: auto;
   }
+}
+
+.good {
+  color: green;
+  font-weight: 600;
+}
+
+.bad {
+  color: red;
+  font-weight: 600;
 }

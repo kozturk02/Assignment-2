@@ -12,11 +12,13 @@ const emptyForm = {
   notes: ''
 };
 
-function Reading({ label, value }) {
+function Reading({ label, value, good }) {
   return (
     <div className="reading-row">
       <span className="muted">{label}</span>
-      <span>{value}</span>
+      <span className={good === true ? 'good' : good === false ? 'bad' : ''}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -318,11 +320,15 @@ function App() {
                     <h3>Latest Readings</h3>
                     {latest_reading ? (
                       <>
-                        <Reading label="Latest" value={latest_reading.timestamp} />
-                        <Reading label="Soil Moisture" value={`${latest_reading.soil_moisture}%`} />
-                        <Reading label="Temperature" value={`${latest_reading.temperature} °C`} />
-                        <Reading label="Rainfall" value={`${latest_reading.rainfall} mm`} />
-                        <Reading label="Sensor" value={latest_reading.sensor_status} />
+                      <Reading label="Latest" value={latest_reading.timestamp} />
+                      <Reading label="Soil Moisture" value={`${latest_reading.soil_moisture}%`} 
+                      good={latest_reading.soil_moisture >= crop.target_min && latest_reading.soil_moisture <= crop.target_max} />
+                      <Reading label="Temperature" value={`${latest_reading.temperature} °C`} 
+                      good={latest_reading.temperature <= 35} />
+                      <Reading label="Rainfall" value={`${latest_reading.rainfall} mm`} 
+                      good={latest_reading.rainfall < 5} />
+                      <Reading label="Sensor" value={latest_reading.sensor_status} 
+                      good={latest_reading.sensor_status === 'Online'} />
                       </>
                     ) : <p>No data</p>}
                   </div>
