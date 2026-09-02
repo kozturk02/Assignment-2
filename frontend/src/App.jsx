@@ -12,6 +12,15 @@ const emptyForm = {
   notes: ''
 };
 
+function Reading({ label, value }) {
+  return (
+    <div className="reading-row">
+      <span className="muted">{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
+
 function App() {
   const [crops, setCrops] = useState([]);
   const [readings, setReadings] = useState([]);
@@ -24,8 +33,6 @@ function App() {
   const [selectedCrop, setSelectedCrop] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
   const [deleteError, setDeleteError] = useState('');
   const [historyCrop, setHistoryCrop] = useState(null);
 
@@ -58,7 +65,10 @@ function App() {
 
   useEffect(() => {
     function closeOnEscape(e) {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') {
+        closeModal();
+        setHistoryCrop(null);
+      }
     }
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
@@ -122,7 +132,6 @@ function App() {
       notes: form.notes
     };
 
-    setSaving(true);
     setFormError('');
 
     try {
@@ -136,15 +145,9 @@ function App() {
     } catch (err) {
       setFormError(err.message);
     }
-
-    setSaving(false);
   }
 
   async function removeCrop(crop) {
-    const ok = window.confirm(`Delete the ${crop.crop_name} card? This only removes the card -- sensor data is unaffected.`);
-    if (!ok) return;
-
-    setDeletingId(crop.id);
     setDeleteError('');
 
     try {
@@ -154,7 +157,6 @@ function App() {
       setDeleteError(err.message);
     }
 
-    setDeletingId(null);
   }
 
   if (loading) return <p className="loading-state">Loading crop cards...</p>;
@@ -189,7 +191,7 @@ function App() {
         </div>
 
         <div className="summary-actions">
-          <button className="btn primary" disabled={!sensorAvailable} onClick={openAdd}>+ Add Crop Card</button>
+          <button className="btn primary" onClick={openAdd}>+ Add Crop Card</button>
           <button className="btn" onClick={loadReadings}>Refresh Sensor Data</button>
         </div>
       </div>
@@ -252,9 +254,60 @@ function App() {
 
               <div className="form-actions full-width">
                 <button type="button" className="btn" onClick={closeModal}>Cancel</button>
-                <button className="btn primary" disabled={saving}>{saving ? 'Saving...' : modal === 'add' ? 'Save Crop Card' : 'Save Changes'}</button>
+                <button className="btn primary">Save</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {historyCrop && (
+        <div className="modal-overlay history-overlay" onClick={() => setHistoryCrop(null)}>
+          <div className="history-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h2>{historyCrop.crop_name}</h2>
+                <p>{historyCrop.location}</p>
+              </div>
+              <button className="close-btn" onClick={() => setHistoryCrop(null)}>&times;</button>
+            </div>
+
+            <div className="history-info">
+              <div>
+                <span>Target Range</span>
+                <strong>{historyCrop.target_min}&ndash;{historyCrop.target_max}%</strong>
+              </div>
+              <div>
+                <span>Normal Water</span>
+                <strong>{historyCrop.normal_water} L</strong>
+              </div>
+              {historyCrop.notes && (
+                <div>
+                  <span>Notes</span>
+                  <strong>{historyCrop.notes}</strong>
+                </div>
+              )}
+            </div>
+
+            <h3 className="history-title">Sensor History</h3>
+
+            <div className="history-list">
+              {readings
+                .filter(r => r.crop_name === historyCrop.crop_name)
+                .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+                .map(reading => {
+                  const historyResult = analyseCrop(historyCrop, reading);
+                  return (
+                    <div className="history-item" key={reading.timestamp}>
+                      <p><strong>{reading.timestamp}</strong> &middot; {reading.sensor_status}</p>
+                      <p>Moisture: {reading.soil_moisture}% &middot; Temp: {reading.temperature}°C &middot; Rainfall: {reading.rainfall} mm</p>
+                      <p>Condition: {historyResult.condition} &middot; Action: {historyResult.action}</p>
+                      {historyResult.alerts.length > 0 && <p>Alerts: {historyResult.alerts.join(', ')}</p>}
+                      {reading.notes && <p><em>{reading.notes}</em></p>}
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </div>
       )}
@@ -313,34 +366,10 @@ function App() {
 
                 <div className="card-actions">
                   <button className="btn" onClick={() => openEdit(crop)}>Modify</button>
-                  <button className="btn" onClick={() => setHistoryCrop(historyCrop === crop.crop_name ? null : crop.crop_name)}>
-                    {historyCrop === crop.crop_name ? 'Hide History' : 'View History'}
-                  </button>
-                  <button className="btn danger" onClick={() => removeCrop(crop)} disabled={deletingId === crop.id}>
-                    {deletingId === crop.id ? 'Deleting...' : 'Delete'}
-                  </button>
+                  <button className="btn" onClick={() => setHistoryCrop(crop)}>View History</button>
+                  <button className="btn danger" onClick={() => removeCrop(crop)}>Delete</button>
                 </div>
 
-                {historyCrop === crop.crop_name && (
-                  <div className="history">
-                    <h3>Sensor History &mdash; {crop.crop_name}</h3>
-                    {readings
-                      .filter(r => r.crop_name === crop.crop_name)
-                      .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-                      .map(reading => {
-                        const historyResult = analyseCrop(crop, reading);
-                        return (
-                          <div className="history-item" data-condition={historyResult.condition} key={reading.timestamp}>
-                            <p>{reading.timestamp} &middot; {reading.sensor_status}</p>
-                            <p>Moisture: {reading.soil_moisture}% &middot; Temp: {reading.temperature}°C &middot; Rainfall: {reading.rainfall}mm</p>
-                            <p>Condition: {historyResult.condition} &middot; Action: {historyResult.action}</p>
-                            {historyResult.alerts.length > 0 && <p>Alerts: {historyResult.alerts.join(', ')}</p>}
-                            {reading.notes && <p><em>{reading.notes}</em></p>}
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -349,14 +378,4 @@ function App() {
     </div>
   );
 }
-
-function Reading({ label, value }) {
-  return (
-    <div className="reading-row">
-      <span className="muted">{label}</span>
-      <span>{value}</span>
-    </div>
-  );
-}
-
 export default App;
