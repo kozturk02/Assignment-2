@@ -9,7 +9,7 @@ async function request(path, options = {}) {
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data?.error || `Request failed with status ${res.status}`);
+    throw new Error(`Request failed with status ${res.status}`);
   }
 
   return data;
@@ -17,10 +17,6 @@ async function request(path, options = {}) {
 
 export function getCrops() {
   return request('/crops');
-}
-
-export function getCrop(id) {
-  return request(`/crops/${id}`);
 }
 
 export function createCrop(payload) {

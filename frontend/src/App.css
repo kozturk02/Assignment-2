@@ -91,37 +91,27 @@ body {
 }
 
 .status-badge {
-  display: inline-block;
-  width: fit-content;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: #f1f1f2;
-  color: #6b7280;
   font-size: 13px;
   font-weight: bold;
 }
 
 .status-badge[data-status="Normal"],
 .status-badge[data-condition="Healthy"] {
-  background: #dcfce7;
   color: #15803d;
 }
 
 .status-badge[data-status="Watch"],
 .status-badge[data-condition="Dry"] {
-  background: #fef3c7;
   color: #b45309;
 }
 
 .status-badge[data-condition="Too Wet"] {
-  background: #dbeafe;
   color: #1d4ed8;
 }
 
 .status-badge[data-status="Critical"],
 .status-badge[data-condition="Sensor Problem"],
 .status-badge[data-condition="Invalid Data"] {
-  background: #fee2e2;
   color: #b91c1c;
 }
 
@@ -230,7 +220,7 @@ body {
 
 .history-modal {
   width: 100%;
-  max-width: 760px;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   padding: 28px;

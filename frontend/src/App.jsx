@@ -24,37 +24,29 @@ function Reading({ label, value }) {
 function App() {
   const [crops, setCrops] = useState([]);
   const [readings, setReadings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const [sensorError, setSensorError] = useState('');
-  const [sensorAvailable, setSensorAvailable] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [modal, setModal] = useState(null);
   const [selectedCrop, setSelectedCrop] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
-  const [deleteError, setDeleteError] = useState('');
   const [historyCrop, setHistoryCrop] = useState(null);
 
   async function loadCrops() {
-    setLoading(true);
     try {
       setCrops(await getCrops());
-      setLoadError('');
     } catch (err) {
-      setLoadError(err.message);
+      alert(`Error: ${err.message}`);
+      return;
     }
-    setLoading(false);
   }
 
   async function loadReadings() {
     try {
       setReadings(await getReadings());
-      setSensorAvailable(true);
-      setSensorError('');
       setLastRefresh(new Date());
     } catch (err) {
-      setSensorError(err.message);
+      alert(`Error: ${err.message}`);
+      return;
     }
   }
 
@@ -80,7 +72,6 @@ function App() {
   });
 
   let farmStatus = calculateFarmStatus(results);
-  if (crops.length > 0 && !sensorAvailable) farmStatus = 'Sensor Feed Unavailable';
 
   const availableNames = getAvailableCropNames(readings, crops);
 
@@ -143,31 +134,18 @@ function App() {
       await loadCrops();
       closeModal();
     } catch (err) {
-      setFormError(err.message);
+      alert(`Error: ${err.message}`);
     }
   }
 
   async function removeCrop(crop) {
-    setDeleteError('');
-
     try {
       await deleteCrop(crop.id);
       await loadCrops();
     } catch (err) {
-      setDeleteError(err.message);
+      alert(`Error: ${err.message}`);
     }
 
-  }
-
-  if (loading) return <p className="loading-state">Loading crop cards...</p>;
-
-  if (loadError) {
-    return (
-      <div className="error-state">
-        <p>Something went wrong loading crop cards: {loadError}</p>
-        <button className="btn" onClick={loadCrops}>Retry</button>
-      </div>
-    );
   }
 
   return (
@@ -196,9 +174,6 @@ function App() {
         </div>
       </div>
 
-      {sensorError && <p className="error-banner">Sensor refresh failed: {sensorError}</p>}
-      {deleteError && <p className="error-banner">Delete failed: {deleteError}</p>}
-
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -223,32 +198,28 @@ function App() {
 
               <label className="full-width">
                 Location
-                <input name="location" placeholder="e.g., Greenhouse 1" value={form.location} onChange={handleChange} required />
+                <input name="location" placeholder="e.g. Greenhouse 1" value={form.location} onChange={handleChange} required />
               </label>
 
               <label>
                 Target Min (%)
-                <input type="number" name="target_min" placeholder="e.g., 20" value={form.target_min} onChange={handleChange} required />
+                <input type="number" name="target_min" placeholder="min. 0" value={form.target_min} onChange={handleChange} required />
               </label>
 
               <label>
                 Target Max (%)
-                <input type="number" name="target_max" placeholder="e.g., 80" value={form.target_max} onChange={handleChange} required />
+                <input type="number" name="target_max" placeholder="max. 100" value={form.target_max} onChange={handleChange} required />
               </label>
 
               <label className="full-width">
                 Normal Water (L)
-                <input type="number" name="normal_water" placeholder="e.g., 500" value={form.normal_water} onChange={handleChange} required />
+                <input type="number" name="normal_water" placeholder="e.g. 500" value={form.normal_water} onChange={handleChange} required />
               </label>
 
               <label className="full-width">
                 Notes
                 <textarea name="notes" placeholder="Add any notes about this crop..." value={form.notes} onChange={handleChange} />
               </label>
-
-              {modal === 'add' && availableNames.length === 0 && (
-                <p className="form-error full-width">No crop names available -- every crop in the sensor feed already has a card.</p>
-              )}
 
               {formError && <p className="form-error full-width">{formError}</p>}
 
@@ -312,18 +283,18 @@ function App() {
         </div>
       )}
 
-      {crops.length === 0 ? (
-        <p className="empty-state">No crop cards yet. Add one to get started.</p>
-      ) : (
+      {crops.length > 0 && (
         <div className="crop-grid">
           {results.map(result => {
             const { crop, latest_reading, condition, recommended_water, alerts, action } = result;
             const measures = [`${action}.`];
 
-            if (typeof recommended_water === 'number') {
-              measures.push(recommended_water > 0 ? `Apply ${recommended_water} L of water.` : 'No irrigation needed right now.');
+            if (typeof recommended_water === 'number' && recommended_water > 0) {
+              measures.push(`Apply ${recommended_water} L of water.`);
             }
-            measures.push(...alerts);
+            if (alerts.length > 0) {
+              measures.push(...alerts);
+            }
 
             return (
               <div className="crop-card" key={crop.id}>
