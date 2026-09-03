@@ -84,7 +84,6 @@ function App() {
   function openAdd() {
     setSelectedCrop(null);
     setForm(emptyForm);
-    setFormError('');
     setModal('add');
   }
 
@@ -98,7 +97,6 @@ function App() {
       normal_water: crop.normal_water,
       notes: crop.notes || ''
     });
-    setFormError('');
     setModal('edit');
   }
 
@@ -112,11 +110,6 @@ function App() {
   async function saveCrop(e) {
     e.preventDefault();
 
-    if (modal === 'add' && !form.crop_name) {
-      setFormError('Select a crop name');
-      return;
-    }
-
     const data = {
       location: form.location,
       target_min: Number(form.target_min),
@@ -124,8 +117,6 @@ function App() {
       normal_water: Number(form.normal_water),
       notes: form.notes
     };
-
-    setFormError('');
 
     try {
       if (modal === 'add') {
@@ -136,7 +127,7 @@ function App() {
       await loadCrops();
       closeModal();
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      setFormError(err.message);
     }
   }
 
@@ -147,7 +138,6 @@ function App() {
     } catch (err) {
       alert(`Error: ${err.message}`);
     }
-
   }
 
   return (
@@ -272,9 +262,33 @@ function App() {
                   const historyResult = analyseCrop(historyCrop, reading);
                   return (
                     <div className="history-item" key={reading.timestamp}>
-                      <p><strong>{reading.timestamp}</strong> &middot; {reading.sensor_status}</p>
-                      <p>Moisture: {reading.soil_moisture}% &middot; Temp: {reading.temperature}°C &middot; Rainfall: {reading.rainfall} mm</p>
-                      <p>Condition: {historyResult.condition} &middot; Action: {historyResult.action}</p>
+                      <p>
+                        <strong>{reading.timestamp}</strong> &middot;{' '}
+                        <ReadingValue
+                          value={reading.sensor_status}
+                          good={reading.sensor_status === 'Online'}
+                        />
+                      </p>
+
+                      <p>
+                        Moisture:{' '}
+                        <ReadingValue value={`${reading.soil_moisture}%`}
+                          good={
+                            reading.soil_moisture >= historyCrop.target_min &&
+                            reading.soil_moisture <= historyCrop.target_max}/>
+                        {' · '}
+                        Temp:{' '}
+                        <ReadingValue
+                          value={`${reading.temperature} °C`}
+                          good={reading.temperature <= 35}/>
+                        {' · '}
+                        Rainfall:{' '}
+                        <ReadingValue
+                          value={`${reading.rainfall} mm`}
+                          good={reading.rainfall < 5}/>
+                      </p>
+
+                      <p>Condition: {historyResult.condition} {' · '} Action: {historyResult.action}</p>
                       {historyResult.alerts.length > 0 && <p>Alerts: {historyResult.alerts.join(', ')}</p>}
                       {reading.notes && <p><em>{reading.notes}</em></p>}
                     </div>
