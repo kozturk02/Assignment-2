@@ -395,7 +395,7 @@ body {
   max-width: 380px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 20px 40px rgba(255, 0, 0, 0.18);
   animation: alert-pop 0.18s ease;
 }
 
@@ -408,8 +408,8 @@ body {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--red-bg);
-  color: var(--red);
+  background: #FEE2E2;
+  color: #DC2626;
   font-size: 1.4rem;
   font-weight: 700;
   display: flex;
@@ -421,17 +421,16 @@ body {
 .alert-card__title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text-heading);
+  color: #14151A;
   margin: 0 0 8px;
 }
 
 .alert-card__message {
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: #8A8D93;
   margin: 0 0 20px;
 }
 
 .alert-card__dismiss {
   width: 100%;
 }
-

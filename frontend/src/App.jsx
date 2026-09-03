@@ -187,7 +187,6 @@ function App() {
             <div className="alert-card__icon">!</div>
             <h2 className="alert-card__title">No Crops Available</h2>
             <p className="alert-card__message">{dashError}</p>
-            <button className="btn primary alert-card__dismiss" onClick={() => setDashError('')}>Got it</button>
           </div>
         </div>
       )}
