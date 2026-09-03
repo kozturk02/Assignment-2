@@ -23,7 +23,7 @@ function Reading({ label, value, good }) {
   );
 }
 
-function Reading({ value, good }) {
+function History({ value, good }) {
   return (
     <span className={good ? 'good' : 'bad'}>
       {value}
@@ -271,27 +271,25 @@ function App() {
                   return (
                     <div className="history-item" key={reading.timestamp}>
                       <p>
-                        <strong>{reading.timestamp}</strong> &middot;{' '}
-                        <ReadingValue
-                          value={reading.sensor_status}
-                          good={reading.sensor_status === 'Online'}
-                        />
+                        <strong>{reading.timestamp}</strong> {' · '}
+                        <History value={reading.sensor_status}
+                          good={reading.sensor_status === 'Online'}/>
                       </p>
 
                       <p>
                         Moisture:{' '}
-                        <ReadingValue value={`${reading.soil_moisture}%`}
+                        <History value={`${reading.soil_moisture}%`}
                           good={
                             reading.soil_moisture >= historyCrop.target_min &&
                             reading.soil_moisture <= historyCrop.target_max}/>
                         {' · '}
                         Temp:{' '}
-                        <ReadingValue
+                        <History
                           value={`${reading.temperature} °C`}
                           good={reading.temperature <= 35}/>
                         {' · '}
                         Rainfall:{' '}
-                        <ReadingValue
+                        <History
                           value={`${reading.rainfall} mm`}
                           good={reading.rainfall < 5}/>
                       </p>
