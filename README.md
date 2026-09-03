@@ -1,4 +1,4 @@
-# HealthCoverSim
+# SmartFarm Crop IoT Dashboard
 
 A full-stack web app for creating and managing simulated private health insurance quotes.
 

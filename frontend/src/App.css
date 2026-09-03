@@ -86,7 +86,7 @@ body {
 }
 
 .status-badge {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: bold;
 }
 
@@ -173,7 +173,6 @@ body {
 }
 
 .reading-row span:last-child {
-  color: #14151a;
   font-weight: bold;
 }
 
