@@ -25,9 +25,11 @@ function Reading({ label, value, good }) {
 
 function History({ value, good }) {
   return (
-    <span className={good ? 'good' : 'bad'}>
-      {value}
-    </span>
+    <div className="reading-row">
+      <span className={good ? 'good' : 'bad'}>
+        {value}
+      </span>
+    </div>
   );
 }
 
