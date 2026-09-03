@@ -219,16 +219,13 @@ function App() {
           <span className="summary-label">Last Refresh</span>
           <span className="summary-value">{lastRefresh ? lastRefresh.toLocaleTimeString() : 'Never'}</span>
         </div>
-
-        <center>
+        
         {sensorError && (
           <div className="dashboard-message error-message">
             <strong>{readingsHaveLoaded ? "Sensor refresh failed" : "Sensor Feed Unavailable"}</strong>
             <div>{`${sensorError}`}</div>
           </div>
         )}
-
-        </center>
 
         <div className="summary-actions">
           <button className="btn primary" onClick={openAdd} disabled={!readingsHaveLoaded}>+ Add Crop Card</button>
