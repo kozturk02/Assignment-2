@@ -21,23 +21,26 @@ function validateCropAdd(data) {
 }
 
 function validateCropUpdate(data) {
-  if (typeof data.location !== 'string' ||data.location.length < 1) {
+  if (typeof data.location !== 'string' || data.location.length < 1) {
     return 'Please enter a valid location name.';
-  } else if (data.location.length > 100) {
+  } 
+  if (data.location.length > 100) {
     return 'Location name must be less than 100 characters.';
   }
   if (typeof data.target_min !== 'number' || data.target_min < 0) {
-    return 'Please enter a valid minimum target soil moisture value.';
-  } else if (data.target_min > 100) {
-    return 'Minimum target soil moisture must be less than 100.';
+    return 'Minimum target value must be a positive number.';
+  }
+  if (data.target_min > 100) {
+    return 'Minimum target value must be less than 100.';
   }
   if (typeof data.target_max !== 'number' || data.target_max < 0) {
-    return 'Please enter a valid maximum target soil moisture value.';
-  } else if (data.target_max > 100) {
-    return 'Maximum target soil moisture must be less than 100.';
+    return 'Maximum target value must be a positive number.';
+  }
+  if (data.target_max > 100) {
+    return 'Maximum target value must be less than 100.';
   }
   if (data.target_min >= data.target_max) {
-    return 'Minimum target soil moisture must be less than maximum target soil moisture.';
+    return 'Minimum target value must be less than maximum target value.';
   }
   if (typeof data.normal_water !== 'number' || data.normal_water <= 0) {
     return 'Please enter a valid normal water value.';

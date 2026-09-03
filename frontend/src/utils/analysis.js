@@ -75,9 +75,7 @@ export function calculateFarmStatus(results) {
 
   if (results.some(
       (r) =>
-        r.condition === 'Dry' ||
-        r.condition === 'Too Wet' ||
-        r.alerts.includes('High temperature')
+        r.condition === 'Dry' || r.condition === 'Too Wet' || r.alerts.includes('High temperature')
     )
   ) { return 'Watch'; }
   return 'Normal';

@@ -350,6 +350,33 @@ body {
   margin: 0 0 4px;
 }
 
+.dash-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.dash {
+  background: var(--text-heading);
+  color: #fff;
+  padding: 14px 22px;
+  border-radius: var(--radius-control);
+  font-size: 0.9rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: dash-fade 2.5s ease forwards;
+}
+
+@keyframes dash-fade {
+  0% { opacity: 0; transform: translateY(-8px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @media (max-width: 960px) {
   .crop-grid {
     grid-template-columns: 1fr;
@@ -387,3 +414,4 @@ body {
     grid-column: auto;
   }
 }
+

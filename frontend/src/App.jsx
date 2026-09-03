@@ -25,7 +25,7 @@ function Reading({ label, value, good }) {
 
 function History({ value, good }) {
   return (
-      <span className={good ? 'good' : 'bad'}>
+    <span className={good ? 'good' : 'bad'}>
       {value}
     </span>
   );
@@ -40,6 +40,7 @@ function App() {
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
   const [historyCrop, setHistoryCrop] = useState(null);
+  const [dashError, setDashError] = useState('');
 
   async function loadCrops() {
     try {
@@ -90,6 +91,11 @@ function App() {
   }
 
   function openAdd() {
+    if (availableNames.length === 0) {
+      setDashError('No crop names available - every crop already has a card.');
+      setTimeout(() => setDashError(''), 2500);
+      return;
+    }
     setSelectedCrop(null);
     setForm(emptyForm);
     setModal('add');
@@ -174,62 +180,68 @@ function App() {
         </div>
       </div>
 
-      {modal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h2>{modal === 'add' ? 'Add Crop Card' : 'Edit Crop Card'}</h2>
-                {modal === 'edit' && <p>{selectedCrop.crop_name} (name cannot be changed)</p>}
-              </div>
-              <button className="close-btn" onClick={closeModal}>&times;</button>
-            </div>
-
-            <form className="crop-form" onSubmit={saveCrop}>
-              {modal === 'add' && (
-                <label className="full-width">
-                  Crop Name
-                  <select name="crop_name" value={form.crop_name} onChange={handleChange} required>
-                    <option value="" disabled>Select a crop</option>
-                    {availableNames.map(name => <option key={name} value={name}>{name}</option>)}
-                  </select>
-                </label>
-              )}
-
-              <label className="full-width">
-                Location
-                <input name="location" placeholder="e.g. Greenhouse 1" value={form.location} onChange={handleChange} required />
-              </label>
-
-              <label>
-                Target Min (%)
-                <input type="number" name="target_min" placeholder="min. 0" value={form.target_min} onChange={handleChange} required />
-              </label>
-
-              <label>
-                Target Max (%)
-                <input type="number" name="target_max" placeholder="max. 100" value={form.target_max} onChange={handleChange} required />
-              </label>
-
-              <label className="full-width">
-                Normal Water (L)
-                <input type="number" name="normal_water" placeholder="e.g. 500" value={form.normal_water} onChange={handleChange} required />
-              </label>
-
-              <label className="full-width">
-                Notes
-                <textarea name="notes" placeholder="Add any notes about this crop..." value={form.notes} onChange={handleChange} />
-              </label>
-
-              {formError && <p className="form-error full-width">{formError}</p>}
-
-              <div className="form-actions full-width">
-                <button type="button" className="btn" onClick={closeModal}>Cancel</button>
-                <button className="btn primary">Save</button>
-              </div>
-            </form>
+      { dashError && (
+          <div className="dash-overlay">
+            <div className="dash">{dashError}</div>
           </div>
+      )}
+
+      {modal && (
+      <div className="modal-overlay" onClick={closeModal}>
+        <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal-header">
+            <div>
+              <h2>{modal === 'add' ? 'Add Crop Card' : 'Edit Crop Card'}</h2>
+              {modal === 'edit' && <p>{selectedCrop.crop_name} (name cannot be changed)</p>}
+            </div>
+            <button className="close-btn" onClick={closeModal}>&times;</button>
+          </div>
+
+          <form className="crop-form" onSubmit={saveCrop}>
+            {modal === 'add' && (
+              <label className="full-width">
+                Crop Name
+                <select name="crop_name" value={form.crop_name} onChange={handleChange} required>
+                  <option value="" disabled>{`Available Crops (${availableNames.length})`}</option>
+                  {availableNames.map(name => <option key={name} value={name}>{name}</option>)}
+                </select>
+              </label>
+            )}
+
+            <label className="full-width">
+              Location
+              <input name="location" placeholder="e.g. Greenhouse 1" value={form.location} onChange={handleChange} required />
+            </label>
+
+            <label>
+              Target Min (%)
+              <input type="number" name="target_min" placeholder="min. 0" value={form.target_min} onChange={handleChange} required />
+            </label>
+
+            <label>
+              Target Max (%)
+              <input type="number" name="target_max" placeholder="max. 100" value={form.target_max} onChange={handleChange} required />
+            </label>
+
+            <label className="full-width">
+              Normal Water (L)
+              <input type="number" name="normal_water" placeholder="e.g. 500" value={form.normal_water} onChange={handleChange} required />
+            </label>
+
+            <label className="full-width">
+              Notes
+              <textarea name="notes" placeholder="Add any notes about this crop..." value={form.notes} onChange={handleChange} />
+            </label>
+
+            {formError && <p className="form-error full-width">{formError}</p>}
+
+            <div className="form-actions full-width">
+              <button type="button" className="btn" onClick={closeModal}>Cancel</button>
+              <button className="btn primary">Save</button>
+            </div>
+          </form>
         </div>
+      </div>
       )}
 
       {historyCrop && (
@@ -273,7 +285,7 @@ function App() {
                       <p>
                         <strong>{reading.timestamp}</strong> {' · Previously: '}
                         <History value={reading.sensor_status}
-                          good={reading.sensor_status === 'Online'}/>
+                          good={reading.sensor_status === 'Online'} />
                       </p>
 
                       <p>
@@ -281,17 +293,17 @@ function App() {
                         <History value={`${reading.soil_moisture}%`}
                           good={
                             reading.soil_moisture >= historyCrop.target_min &&
-                            reading.soil_moisture <= historyCrop.target_max}/>
+                            reading.soil_moisture <= historyCrop.target_max} />
                         {' · '}
                         Temp:{' '}
                         <History
                           value={`${reading.temperature} °C`}
-                          good={reading.temperature <= 35}/>
+                          good={reading.temperature <= 35} />
                         {' · '}
                         Rainfall:{' '}
                         <History
                           value={`${reading.rainfall} mm`}
-                          good={reading.rainfall < 5}/>
+                          good={reading.rainfall < 5} />
                       </p>
 
                       <p>Condition: {historyResult.condition} {' · '} Action: {historyResult.action}</p>
