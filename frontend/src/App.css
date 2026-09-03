@@ -176,11 +176,11 @@ body {
   font-weight: bold;
 }
 
-.reading-row .good {
+.good {
   color: green;
 }
 
-.reading-row .bad {
+.bad {
   color: red;
 }
 
