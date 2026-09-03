@@ -119,6 +119,24 @@ Return only the JSON array. Do not use Markdown or explanation.
 
 ## AI use and corrections made
 
+## AI Use
+
+I used ChatGPT mainly as a support tool while developing the project.
+
+I used it to help find mistakes in my code, correct errors, explain parts of React and backend code that I was unsure about, and help with some CSS formatting.
+
+I also used it to review whether parts of my implementation matched the assignment requirements and to help check the sensor data.
+
+I reviewed the suggestions before applying them and made the final implementation decisions myself.
+
+During testing and review, I found a few issues that needed to be corrected.
+
+The latest Lettuce sensor reading originally had a soil moisture value of 50. Since the Lettuce target range is 60 to 80, this caused it to be classified as Dry instead of Healthy. I changed the value to 65 so the latest Lettuce reading produces the required Healthy condition.
+
+I also corrected the sensor validation so that structural errors cause the whole sensor file to be rejected instead of filtering out invalid readings.
+
+Other small corrections included making duplicate crop names return HTTP 409, preventing crop_name from being changed during Edit, and returning the required JSON response after deleting a Crop Card.
+
 ## Limitation
 
 The sensor feed is a static local JSON file that simulates IoT data. The application does not connect to real sensors or a live cloud/MQTT service.
