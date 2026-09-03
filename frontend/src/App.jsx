@@ -185,8 +185,7 @@ function App() {
         <div className="modal-overlay" onClick={() => setDashError('')}>
           <div className="alert-card" onClick={e => e.stopPropagation()}>
             <div className="alert-card__icon">!</div>
-            <h2 className="alert-card__title">No Crops Available</h2>
-            <p className="alert-card__message">{dashError}</p>
+            <h2 className="alert-card__title">No Crops Names Available</h2>
           </div>
         </div>
       )}

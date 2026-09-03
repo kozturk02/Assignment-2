@@ -389,18 +389,17 @@ body {
 }
 
 .alert-card {
-  background: #ff0000a2;
+  background: #ff000065;
   border-radius: 16px;
-  padding: 28px 32px;
-  max-width: 380px;
+  padding: 20px 24px;
+  max-width: 400px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(255, 0, 0, 0.18);
   animation: alert-pop 0.18s ease;
 }
 
 @keyframes alert-pop {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.5); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -423,14 +422,4 @@ body {
   font-weight: 700;
   color: #14151A;
   margin: 0 0 8px;
-}
-
-.alert-card__message {
-  font-size: 0.9rem;
-  color: #8A8D93;
-  margin: 0 0 20px;
-}
-
-.alert-card__dismiss {
-  width: 100%;
 }
