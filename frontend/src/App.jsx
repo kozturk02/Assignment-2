@@ -23,6 +23,14 @@ function Reading({ label, value, good }) {
   );
 }
 
+function Reading({ value, good }) {
+  return (
+    <span className={good ? 'good' : 'bad'}>
+      {value}
+    </span>
+  );
+}
+
 function App() {
   const [crops, setCrops] = useState([]);
   const [readings, setReadings] = useState([]);
