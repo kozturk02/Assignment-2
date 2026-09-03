@@ -52,18 +52,18 @@ function App() {
       setCrops(await getCrops());
       setCropError('');
     } catch (err) {
-      setCropError('Failed to load crop data.');
-      return;
+      setCropError(err.message);
     }
   }
 
   async function loadReadings() {
     try {
       setReadings(await getReadings());
+      setReadingsHaveLoaded(true);
+      setSensorError('');
       setLastRefresh(new Date());
     } catch (err) {
-      setSensorError('Failed to load sensor data.');
-      return;
+      setSensorError(err.message);
     }
   }
 
@@ -221,7 +221,7 @@ function App() {
         </div>
 
         <div className="summary-actions">
-          <button className="btn primary" onClick={openAdd}>+ Add Crop Card</button>
+          <button className="btn primary" onClick={openAdd} disabled={!readingsHaveLoaded}>+ Add Crop Card</button>
           <button className="btn" onClick={loadReadings}>Refresh Sensor Data</button>
         </div>
       </div>
@@ -240,7 +240,7 @@ function App() {
         <div className="modal-overlay" onClick={() => setDashError('')}>
           <div className="alert-card" onClick={e => e.stopPropagation()}>
             <div className="alert-card__icon">!</div>
-            <h2 className="alert-card__title">No Crops Names Available</h2>
+            <h2 className="alert-card__title">{dashError}</h2>
           </div>
         </div>
       )}
