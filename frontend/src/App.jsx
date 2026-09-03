@@ -25,11 +25,9 @@ function Reading({ label, value, good }) {
 
 function History({ value, good }) {
   return (
-    <div className="reading-row">
-      <span className={good ? 'good' : 'bad'}>
-        {value}
-      </span>
-    </div>
+    <span className={good ? 'good' : 'bad'}>
+      {value}
+    </span>
   );
 }
 
@@ -272,13 +270,13 @@ function App() {
                   const historyResult = analyseCrop(historyCrop, reading);
                   return (
                     <div className="history-item" key={reading.timestamp}>
-                      <p>
+                      <div className="reading-row">
                         <strong>{reading.timestamp}</strong> {' · '}
                         <History value={reading.sensor_status}
                           good={reading.sensor_status === 'Online'}/>
-                      </p>
+                      </div>
 
-                      <p>
+                      <div className="reading-row">
                         Moisture:{' '}
                         <History value={`${reading.soil_moisture}%`}
                           good={
@@ -294,7 +292,7 @@ function App() {
                         <History
                           value={`${reading.rainfall} mm`}
                           good={reading.rainfall < 5}/>
-                      </p>
+                      </div>
 
                       <p>Condition: {historyResult.condition} {' · '} Action: {historyResult.action}</p>
                       {historyResult.alerts.length > 0 && <p>Alerts: {historyResult.alerts.join(', ')}</p>}
