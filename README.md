@@ -2,22 +2,30 @@
 
 SmartFarm is a full-stack crop dashboard built with React, Node.js/Express and SQLite. Crop Cards are stored in SQLite, while simulated sensor readings are read from backend/data/sensor-readings.json.
 
-## Setup and run
+## Setup
 
-Backend:
-1. Open a terminal in the backend folder.
-2. Run npm install.
-3. Run node index.js.
+Run the setup script from the project root:
 
-Frontend:
-1. Open another terminal in the frontend folder.
-2. Run npm install.
-3. Run npm run dev.
+chmod +x setup_ubuntu.sh run_backend.sh run_frontend.sh
+./setup_ubuntu.sh
 
-## URLs
+This checks for Node.js (installing it via nvm if missing), installs backend and
+frontend dependencies, and validates that the database schema and frontend build
+are both working correctly.
 
-Frontend: http://localhost:5173
-Backend: http://localhost:3001
+## Run
+
+Terminal 1:
+
+./run_backend.sh
+
+Runs the API on http://localhost:3001
+
+Terminal 2:
+
+./run_frontend.sh
+
+Runs the app on http://localhost:5173
 
 ## Database creation and seeding
 
@@ -118,8 +126,6 @@ Make the latest readings produce these cases with the default Crop Card settings
 Return only the JSON array. Do not use Markdown or explanation.
 
 ## AI use and corrections made
-
-## AI Use
 
 I used ChatGPT mainly as a support tool while developing the project.
 
