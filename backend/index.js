@@ -10,22 +10,48 @@ app.use(cors());
 app.use(express.json());
 
 function validateCropAdd(data) {
-  if (typeof data.crop_name !== 'string' || data.crop_name.trim() === ''
-        || validateCropUpdate(data)) {
-    return true;
+  if (typeof data.crop_name !== 'string' || data.crop_name.trim() === '') {
+    const reason = validateCropUpdate(data);
+    if(reason !== '') {
+      return 'Please select a crop name.';
+    }
+    return reason;
   }
+  return '';
 }
 
 function validateCropUpdate(data) {
-  if (typeof data.location !== 'string' || data.location.length < 1 || data.location.length > 100
-        || typeof data.target_min !== 'number' || data.target_min < 0 || data.target_min > 100
-        || typeof data.target_max !== 'number' || data.target_max < 0 || data.target_max > 100
-        || data.target_min >= data.target_max
-        || typeof data.normal_water !== 'number' || data.normal_water <= 0 || data.normal_water > 10000
-        || (data.notes !== undefined && (typeof data.notes !== 'string' || data.notes.length > 500))) {
-    return true;
+  if (typeof data.location !== 'string' ||data.location.length < 1) {
+    return 'Please enter a valid location name.';
+  } else if (data.location.length > 100) {
+    return 'Location name must be less than 100 characters.';
   }
-  return false;
+  if (typeof data.target_min !== 'number' || data.target_min < 0) {
+    return 'Please enter a valid minimum target soil moisture value.';
+  } else if (data.target_min > 100) {
+    return 'Minimum target soil moisture must be less than 100.';
+  }
+  if (typeof data.target_max !== 'number' || data.target_max < 0) {
+    return 'Please enter a valid maximum target soil moisture value.';
+  } else if (data.target_max > 100) {
+    return 'Maximum target soil moisture must be less than 100.';
+  }
+  if (data.target_min >= data.target_max) {
+    return 'Minimum target soil moisture must be less than maximum target soil moisture.';
+  }
+  if (typeof data.normal_water !== 'number' || data.normal_water <= 0) {
+    return 'Please enter a valid normal water value.';
+  } else if (data.normal_water > 10000) {
+    return 'Normal water value must be less than 10000L.';
+  }
+  if (data.notes !== undefined && (typeof data.notes !== 'string' || data.notes.length > 500)) {
+    if (typeof data.notes !== 'string') {
+      return 'Notes written are not in a valid format.';
+    } else if (data.notes.length > 500) {
+      return 'Notes can not exceed 500 characters.';
+    }
+  }
+  return '';
 }
 
 // CREATE
@@ -41,7 +67,7 @@ app.post('/api/crops', (req, res) => {
 
   const validationError = validateCropAdd({ crop_name, location, target_min, target_max, normal_water, notes });
   if (validationError) {
-    return res.status(400).json({ error: 'Invalid crop data' });
+    return res.status(400).json({ error: validationError });
   }
 
   try {
@@ -102,8 +128,8 @@ app.put('/api/crops/:id', (req, res) => {
   } = req.body;
 
   const validationError = validateCropUpdate({ location, target_min, target_max, normal_water, notes });
-  if (validationError) {
-    return res.status(400).json({ error: 'Invalid crop data' });
+  if (validationError !== '') {
+    return res.status(400).json({ error: validationError });
   }
 
   try {

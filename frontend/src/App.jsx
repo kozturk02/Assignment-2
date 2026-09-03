@@ -271,7 +271,7 @@ function App() {
                   return (
                     <div className="history-item" key={reading.timestamp}>
                       <p>
-                        <strong>{reading.timestamp}</strong> {' · '}
+                        <strong>{reading.timestamp}</strong> {' · Previously: '}
                         <History value={reading.sensor_status}
                           good={reading.sensor_status === 'Online'}/>
                       </p>
