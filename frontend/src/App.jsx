@@ -222,8 +222,8 @@ function App() {
 
         {sensorError && (
           <div className="dashboard-message error-message">
-            <span>{readingsHaveLoaded ? "Sensor refresh failed" : "Sensor Feed Unavailable"}</span>
-            <span>{`${sensorError}`}</span>
+            <strong>{readingsHaveLoaded ? "Sensor refresh failed" : "Sensor Feed Unavailable"}</strong>
+            <div>{`${sensorError}`}</div>
           </div>
         )}
 
