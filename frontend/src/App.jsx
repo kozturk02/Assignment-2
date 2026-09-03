@@ -71,6 +71,7 @@ function App() {
       if (e.key === 'Escape') {
         closeModal();
         setHistoryCrop(null);
+        setDashError('');
       }
     }
     window.addEventListener('keydown', closeOnEscape);
@@ -180,68 +181,73 @@ function App() {
         </div>
       </div>
 
-      { dashError && (
-          <div className="dash-overlay">
-            <div className="dash">{dashError}</div>
+      {dashError && (
+        <div className="modal-overlay" onClick={() => setDashError('')}>
+          <div className="alert-card" onClick={e => e.stopPropagation()}>
+            <div className="alert-card__icon">!</div>
+            <h2 className="alert-card__title">No Crops Available</h2>
+            <p className="alert-card__message">{dashError}</p>
+            <button className="btn primary alert-card__dismiss" onClick={() => setDashError('')}>Got it</button>
           </div>
+        </div>
       )}
 
       {modal && (
-      <div className="modal-overlay" onClick={closeModal}>
-        <div className="modal" onClick={e => e.stopPropagation()}>
-          <div className="modal-header">
-            <div>
-              <h2>{modal === 'add' ? 'Add Crop Card' : 'Edit Crop Card'}</h2>
-              {modal === 'edit' && <p>{selectedCrop.crop_name} (name cannot be changed)</p>}
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h2>{modal === 'add' ? 'Add Crop Card' : 'Edit Crop Card'}</h2>
+                {modal === 'edit' && <p>{selectedCrop.crop_name} (name cannot be changed)</p>}
+              </div>
+              <button className="close-btn" onClick={closeModal}>&times;</button>
             </div>
-            <button className="close-btn" onClick={closeModal}>&times;</button>
-          </div>
 
-          <form className="crop-form" onSubmit={saveCrop}>
-            {modal === 'add' && (
+            <form className="crop-form" onSubmit={saveCrop}>
+              {modal === 'add' && (
+                <label className="full-width">
+                  Crop Name
+                  <select name="crop_name" value={form.crop_name} onChange={handleChange} required>
+                    <option value="" disabled>{`Available Crops (${availableNames.length})`}</option>
+                    {availableNames.map(name => <option key={name} value={name}>{name}</option>)}
+                  </select>
+                </label>
+              )}
+
               <label className="full-width">
-                Crop Name
-                <select name="crop_name" value={form.crop_name} onChange={handleChange} required>
-                  <option value="" disabled>{`Available Crops (${availableNames.length})`}</option>
-                  {availableNames.map(name => <option key={name} value={name}>{name}</option>)}
-                </select>
+                Location
+                <input name="location" placeholder="e.g. Greenhouse 1" value={form.location} onChange={handleChange} required />
               </label>
-            )}
 
-            <label className="full-width">
-              Location
-              <input name="location" placeholder="e.g. Greenhouse 1" value={form.location} onChange={handleChange} required />
-            </label>
+              <label>
+                Target Min (%)
+                <input type="number" name="target_min" placeholder="min. 0" value={form.target_min} onChange={handleChange} required />
+              </label>
 
-            <label>
-              Target Min (%)
-              <input type="number" name="target_min" placeholder="min. 0" value={form.target_min} onChange={handleChange} required />
-            </label>
+              <label>
+                Target Max (%)
+                <input type="number" name="target_max" placeholder="max. 100" value={form.target_max} onChange={handleChange} required />
+              </label>
 
-            <label>
-              Target Max (%)
-              <input type="number" name="target_max" placeholder="max. 100" value={form.target_max} onChange={handleChange} required />
-            </label>
+              <label className="full-width">
+                Normal Water (L)
+                <input type="number" name="normal_water" placeholder="e.g. 500" value={form.normal_water} onChange={handleChange} required />
+              </label>
 
-            <label className="full-width">
-              Normal Water (L)
-              <input type="number" name="normal_water" placeholder="e.g. 500" value={form.normal_water} onChange={handleChange} required />
-            </label>
+              <label className="full-width">
+                Notes
+                <textarea name="notes" placeholder="Add any notes about this crop..." value={form.notes} onChange={handleChange} />
+              </label>
 
-            <label className="full-width">
-              Notes
-              <textarea name="notes" placeholder="Add any notes about this crop..." value={form.notes} onChange={handleChange} />
-            </label>
+              {formError && <p className="form-error full-width">{formError}</p>}
 
-            {formError && <p className="form-error full-width">{formError}</p>}
-
-            <div className="form-actions full-width">
-              <button type="button" className="btn" onClick={closeModal}>Cancel</button>
-              <button className="btn primary">Save</button>
-            </div>
-          </form>
+              <div className="form-actions full-width">
+                <button type="button" className="btn" onClick={closeModal}>Cancel</button>
+                <button className="btn primary">Save</button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
       )}
 
       {historyCrop && (
