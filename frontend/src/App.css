@@ -388,26 +388,6 @@ body {
   }
 }
 
-.feedback-card {
-  background: rgba(0, 255, 0, 0.568);
-  border-radius: 16px;
-  padding: 20px 24px;
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-  margin-bottom: 30%;
-}
-
-.feedback__title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: white;
-  color: #035200;
-  margin: 0 0 8px;
-  border-radius: 10px;
-  padding: 10px;
-}
-
 .alert-card {
   background: #fd585875;
   border-radius: 16px;
@@ -473,18 +453,6 @@ body {
   margin-top: 0;
 }
 
-.dashboard-message {
-  margin-bottom: 20px;
-}
-
-.dash-error-description {
-  margin-bottom: 20px;
-}
-
-.dash-error-title {
-  margin-bottom: 20px;
-}
-
 .error-message {
   color: #b91c1c;
 }
@@ -496,4 +464,23 @@ body {
 .recommended-water {
   margin: 0 0 8px;
   font-size: 14px;
+}
+
+.feedback-card {
+  background: rgba(0, 255, 0, 0.274);
+  border-radius: 16px;
+  padding: 10px 14px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 30%;
+}
+
+.feedback__title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  margin: 0 0 8px;
+  border-radius: 10px;
+  padding: 7px;
 }

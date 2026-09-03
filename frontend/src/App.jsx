@@ -234,10 +234,8 @@ function App() {
       </div>
 
       {feedback && (
-        <div className="modal-overlay" onClick={() => setFeedback('')}>
-          <div className="feedback-card" onClick={e => e.stopPropagation()}>
-            <h2 className="feedback__title">{feedback}</h2>
-          </div>
+        <div className="feedback-card" onClick={e => e.stopPropagation()}>
+          <h2 className="feedback__title">{feedback}</h2>
         </div>
       )}
 
