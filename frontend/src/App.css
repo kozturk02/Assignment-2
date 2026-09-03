@@ -424,5 +424,6 @@ body {
   background: white;
   color: #6d0000;
   margin: 0 0 8px;
-  padding: 2px 5px;
+  border-radius: 50%;
+  padding: 8px;
 }
