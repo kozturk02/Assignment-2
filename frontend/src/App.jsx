@@ -234,8 +234,11 @@ function App() {
       </div>
 
       {feedback && (
-        <div className="feedback-card" onClick={e => e.stopPropagation()}>
-          <h2 className="feedback__title">{feedback}</h2>
+        <div className="feedback-overlay" onClick={() => setFeedback('')}>
+          <div className="feedback-card" onClick={e => e.stopPropagation()}>
+            <div className="feedback__icon">+</div>
+            <h2 className="feedback__title">{feedback}</h2>
+          </div>
         </div>
       )}
 
