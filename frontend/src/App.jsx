@@ -113,7 +113,7 @@ function App() {
 
   function openAdd() {
     if (availableNames.length === 0) {
-      setDashError('No crop names available - every crop already has a card.');
+      setDashError('No Crop Names Available.');
       setTimeout(() => setDashError(''), 2500);
       return;
     }
@@ -220,20 +220,25 @@ function App() {
           <span className="summary-value">{lastRefresh ? lastRefresh.toLocaleTimeString() : 'Never'}</span>
         </div>
 
+        {sensorError && (
+          <div className="dashboard-message error-message">
+            <span>{readingsHaveLoaded ? "Sensor refresh failed" : "Sensor Feed Unavailable"}</span>
+            <span>{`${sensorError}`}</span>
+          </div>
+        )}
+
         <div className="summary-actions">
           <button className="btn primary" onClick={openAdd} disabled={!readingsHaveLoaded}>+ Add Crop Card</button>
           <button className="btn" onClick={loadReadings}>Refresh Sensor Data</button>
         </div>
       </div>
 
-      {sensorError && (
-        <div className="dashboard-message error-message">
-          {readingsHaveLoaded ? `Sensor refresh failed: ${sensorError}` : `Sensor Feed Unavailable: ${sensorError}`}
-        </div>
-      )}
-
       {feedback && (
-        <div className="dashboard-message success-message">{feedback}</div>
+        <div className="modal-overlay" onClick={() => setFeedback('')}>
+          <div className="feedback-card" onClick={e => e.stopPropagation()}>
+            <h2 className="feedback__title">{feedback}</h2>
+          </div>
+        </div>
       )}
 
       {dashError && (
@@ -251,7 +256,17 @@ function App() {
             <div className="modal-header">
               <div>
                 <h2>{modal === 'add' ? 'Add Crop Card' : 'Edit Crop Card'}</h2>
-                {modal === 'edit' && <p>{selectedCrop.crop_name} (name cannot be changed)</p>}
+                {modal === 'edit' && (
+                  <label className="full-width">
+                    Crop Name
+                    <select name="crop_name" value={form.crop_name} disabled>
+                      <option value={form.crop_name}>{form.crop_name}</option>
+                    </select>
+                    <span className="field-note">
+                      Crop name cannot be changed.
+                    </span>
+                  </label>
+                )}
               </div>
               <button className="close-btn" onClick={closeModal}>&times;</button>
             </div>
