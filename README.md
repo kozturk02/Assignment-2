@@ -1,129 +1,124 @@
-# SmartFarm Crop IoT Dashboard
+# SmartFarm Crop Dashboard
 
-A full-stack web app for creating and managing simulated private health insurance quotes.
+SmartFarm is a full-stack crop dashboard built with React, Node.js/Express and SQLite. Crop Cards are stored in SQLite, while simulated sensor readings are read from backend/data/sensor-readings.json.
 
-Stack: React (Vite) frontend, Node.js + Express backend, SQLite database (better-sqlite3), plain CSS.
+## Setup and run
 
-## Project Structure
+Backend:
+1. Open a terminal in the backend folder.
+2. Run npm install.
+3. Run node index.js.
 
-```text
-health-app/
-  server/
-    index.js
-    db.js
-    errorMsgConfig.js
-    records.db (auto-generates on first run)
-  client/
-    index.html
-    src/
-      App.jsx
-      App.css
-      QuoteModal.jsx
-      calculateQuote.js
-      pricingConfig.js
-```
+Frontend:
+1. Open another terminal in the frontend folder.
+2. Run npm install.
+3. Run npm run dev.
 
-## Setup
+## URLs
 
-Run the setup script from the project root:
+Frontend: http://localhost:5173
+Backend: http://localhost:3001
 
-chmod +x setup_ubuntu.sh run_backend.sh run_frontend.sh
-./setup_ubuntu.sh
+## Database creation and seeding
 
-This checks for Node.js (installing it via nvm if missing), installs backend and
-frontend dependencies, and validates that the database schema and frontend build
-are both working correctly.
+SQLite stores Crop Cards only. When the backend starts, the crops table is created if required. Tomato, Lettuce and Wheat are seeded only when the table is empty. Maize is not seeded so it can be created through the UI.
 
-## Run
+Seed cards:
+- Tomato — Greenhouse A — target 55-75 — normal water 500 L
+- Lettuce — Greenhouse B — target 60-80 — normal water 400 L
+- Wheat — North Field — target 35-55 — normal water 300 L
 
-Terminal 1:
+## API routes
 
-./run_backend.sh
+- GET /api/crops — return all Crop Cards
+- GET /api/crops/:id — return one Crop Card
+- POST /api/crops — create a Crop Card
+- PUT /api/crops/:id — update allowed Crop Card fields
+- DELETE /api/crops/:id — delete a Crop Card only
+- GET /api/readings — read and validate the sensor JSON file
 
-Runs the API on http://localhost:3001
+DELETE success returns:
 
-Terminal 2:
+{ "deleted": true, "id": number }
 
-./run_frontend.sh
+## Error format
 
-Runs the app on http://localhost:5173
+Failed API responses use:
 
-## Database Setup
+{ "error": "Clear message describing the problem" }
 
-The database is SQLite, created and initialised by server/db.js. There is no
-separate init.sql file, since better-sqlite3 lets the schema be defined directly
-in JavaScript.
+Important status codes include:
+- 400 for invalid Crop Card data, an invalid crop_name, or attempting to change crop_name
+- 404 when a Crop Card does not exist
+- 409 when crop_name already exists
+- 500 when sensor file validation fails or an unexpected server/database error occurs
 
-When the server starts, db.js:
+## Data ownership
 
-1. Opens or creates, if missing, a file called records.db in the server folder.
-   This file is the entire database.
-2. Runs CREATE TABLE IF NOT EXISTS records (...), defining the columns for a
-   quote record: customer name, cover type, applicant ages and hospital history,
-   cover levels, payment frequency, discount, notes, and an auto-filled
-   created_at timestamp.
+Crop Cards belong to SQLite and can be created, edited and deleted by the user.
 
-No manual setup step is required. Running ./setup_ubuntu.sh, or simply starting
-the server, creates the database on first launch.
+Sensor readings belong to backend/data/sensor-readings.json and are read-only inside the application. Crop Card CRUD never changes this file.
 
-To reset the database, stop the server, delete records.db, and restart it. The
-table is recreated automatically, empty.
+Dashboard results such as condition, recommended water, alerts and Overall Farm Status are calculated in React and are not stored in SQLite.
 
-## How the Quote Calculation Works
+## Exact crop_name matching
 
-Pricing rules can be found in client/src/pricingConfig.js. Calculation rules can be found in client/src/calculateQuote.js. They are kept separate so prices can be changed without touching calculation code.
+crop_name is the exact, case-sensitive key connecting Crop Cards and sensor readings. For example, Tomato matches Tomato but does not match tomato.
 
-The formula, step by step:
+The Add Crop Card dropdown uses crop names returned by GET /api/readings and removes names already used by existing Crop Cards.
 
-- Hospital premium per adult = tier price x (1 + that adult's LHC loading)
-- Hospital total = sum of the above across all adults premiums
-- Extras total = extras tier price x number of adults
-- Family fee = $30/month if cover type is Family
-- Monthly premium = hospital total + extras total + family fee
-- Yearly premium before discount = monthly premium x 12
-- Yearly premium after discount = yearly before discount x (1 - annual discount %), only applied if paying Yearly
-- Final total shown = yearly-after-discount if paying Yearly, otherwise the monthly premium
+## Latest timestamp logic
 
-Lifetime Health Cover (LHC) loading applies only to the hospital premium cover:
+For each Crop Card, React filters readings by the exact crop_name and selects the greatest timestamp. The JSON array order is not used to decide which reading is newest.
 
-- Hospital cover level is None: no loading applies (nothing to load).
-- Applicant's cover history is Yes: 0% loading.
-- Applicant's cover history is No: (age - 30) x 2% if age is over 30, otherwise 0%.
-- Applicant's cover history is Not sure: 0% loading is applied, but a warning is shown in the quote details, since the true loading is unknown and the quote may be inaccurate.
+## Sensor file validation
 
-The annual-payment discount (0-10%) only applies when Payment Frequency is Yearly. It has no effect on monthly pricing.
+GET /api/readings accepts the sensor file only when:
+- the top-level value is an array with exactly 20 objects
+- there are exactly five readings for each of Tomato, Lettuce, Wheat and Maize
+- every object has exactly the seven required fields and correct types
+- timestamps use YYYY-MM-DDTHH:mm:ss, are valid calendar date-times, and do not repeat within the same crop
+- sensor_status is Online, Offline or Faulty
+- exactly one numeric sensor value is deliberately outside its normal business range
 
-## How Family Cover Is Calculated
+If structural validation fails, the whole file is rejected with HTTP 500 instead of returning partial data.
 
-Selecting Family as the cover type affects pricing in two ways:
+## Dashboard decision priority
 
-1. Adult count is 2, the same as Couple cover. Both applicants' hospital and extras
-   premiums are calculated individually, including separate LHC loading per
-   applicant based on each one's own age and hospital cover history.
-2. A flat $30 a month family upgrade fee is added once per policy, not per adult,
-   on top of both adults' hospital and extras totals. Children are not counted or
-   priced individually.
+The latest matching reading is analysed in this order:
+1. Offline or Faulty -> Sensor Problem, recommended water N/A, Check sensor
+2. Online reading with moisture outside 0-100, temperature outside 0-50, or rainfall outside 0-50 -> Invalid Data, recommended water N/A, Check reading
+3. Moisture below target_min -> Dry, recommended water = normal_water, Water crop
+4. Moisture inside the target range including boundaries -> Healthy, recommended water 0 L, Monitor
+5. Moisture above target_max -> Too Wet, recommended water 0 L, Stop watering
 
-So a Family quote's monthly premium equals Applicant 1's loaded hospital premium
-plus Applicant 2's loaded hospital premium, plus extras tier price x 2, plus $30.
+For valid Online readings, temperature above 35 C adds High temperature and rainfall of at least 5 mm adds Rain detected.
 
-## AI Assistance
+Overall Farm Status priority is:
+- No Crops when there are no Crop Cards
+- Sensor Feed Unavailable when Crop Cards exist but no sensor request has ever succeeded
+- Critical when any card has Sensor Problem or Invalid Data
+- Watch when any card is Dry, Too Wet, or has High temperature
+- otherwise Normal
 
-This project was built through an interactive, step-by-step collaboration with Claude, used as a coding tutor and pair-programmer throughout development.
+## Final AI prompt used for the sensor readings
 
-What the AI helped with:
+Generate a valid JSON array containing exactly 20 simulated SmartFarm sensor readings.
+Use these crop_name values exactly and create exactly 5 readings for each:
+Tomato, Lettuce, Wheat, Maize.
+Every object must contain exactly these fields:
+crop_name, timestamp, soil_moisture, temperature, rainfall, sensor_status, notes.
+Use timestamps in YYYY-MM-DDTHH:mm:ss format. Timestamps must be distinct within each crop. The same timestamp may be used by different crops. Mix the array order so the latest reading is not always the last object.
+Use sensor_status only as Online, Offline or Faulty. Most numeric values must be realistic: soil_moisture 0-100, temperature 0-50, rainfall 0-50. Include exactly one structurally valid older reading with one deliberately out-of-range numeric value. That invalid reading must not be the latest reading for its crop.
+Make the latest readings produce these cases with the default Crop Card settings:
+- latest Tomato: Online, Dry, temperature above 35 C
+- latest Lettuce: Online and Healthy
+- latest Wheat: Online, Too Wet, rainfall at least 5 mm
+- latest Maize: sensor_status Faulty
+Return only the JSON array. Do not use Markdown or explanation.
 
-- Explaining core concepts as they came up: Express routing, middleware, React state and hooks, controlled forms, SQLite schema design, CORS, HTTP methods and status codes, JS operators such as ?? and the spread operator.
-- Writing initial code, it guided me step by step for setting up backend and frontend framework. Also assisted me with terminal commands for Git and setting up Ubunutu.
-- Suggesting fixes when I described bugs or pasted error messages.
-
-What I did myself:
-
-- Coded the specific form fields, validation rules, and pricing rules, and the UI layout, based on a mockup I made.
-- Wrote and edited the code in my own files, integrating and adjusting AI-suggested code rather than pasting it in unreviewed.
-- Diagnosed the root cause of at least two real bugs myself during debugging: a const reassignment error, and an operator-precedence logic error in a conditional render.
-- I chose to separate configurable values into their own files rather than hardcoding them inline. Error messages can be found in errorMsgConfig.js, and all pricing figures and rules are located in pricingConfig.js.
+## AI use and corrections made
 
 ## Limitation
 
-This is a simulator, not a real insurance quoting engine. The pricing figures, LHC loading formula, and discount range are simplified rules defined for this project.
+The sensor feed is a static local JSON file that simulates IoT data. The application does not connect to real sensors or a live cloud/MQTT service.

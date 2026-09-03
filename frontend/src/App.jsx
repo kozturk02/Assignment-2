@@ -41,12 +41,18 @@ function App() {
   const [formError, setFormError] = useState('');
   const [historyCrop, setHistoryCrop] = useState(null);
   const [dashError, setDashError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [cropError, setCropError] = useState('');
+  const [sensorError, setSensorError] = useState('');
+  const [readingsHaveLoaded, setReadingsHaveLoaded] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   async function loadCrops() {
     try {
       setCrops(await getCrops());
+      setCropError('');
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      setCropError('Failed to load crop data.');
       return;
     }
   }
@@ -56,14 +62,17 @@ function App() {
       setReadings(await getReadings());
       setLastRefresh(new Date());
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      setSensorError('Failed to load sensor data.');
       return;
     }
   }
 
   useEffect(() => {
-    loadCrops();
-    loadReadings();
+    async function loadDashboard() {
+      await Promise.all([loadCrops(), loadReadings()]);
+      setLoading(false);
+    }
+    loadDashboard();
   }, []);
 
   useEffect(() => {
@@ -79,6 +88,17 @@ function App() {
   }, []);
 
   const results = crops.map(crop => {
+    if (!readingsHaveLoaded) {
+      return {
+        crop,
+        latest_reading: null,
+        condition: 'N/A',
+        recommended_water: 'N/A',
+        alerts: [],
+        action: 'N/A'
+      };
+    }
+
     const reading = getLatestReading(crop.crop_name, readings);
     return { crop, latest_reading: reading, ...analyseCrop(crop, reading) };
   });
@@ -141,6 +161,8 @@ function App() {
       }
       await loadCrops();
       closeModal();
+      setFeedback('Crop card saved successfully.');
+      setTimeout(() => setFeedback(''), 2500);
     } catch (err) {
       setFormError(err.message);
     }
@@ -150,9 +172,32 @@ function App() {
     try {
       await deleteCrop(crop.id);
       await loadCrops();
+      setFeedback('Crop card deleted successfully.');
+      setTimeout(() => setFeedback(''), 2500);
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      setDashError(`Delete failed: ${err.message}`);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="page">
+        <h1 className="page-title">SmartFarm Crop Dashboard</h1>
+        <div className="loading-state">Loading SmartFarm dashboard...</div>
+      </div>
+    );
+  }
+
+  if (cropError) {
+    return (
+      <div className="page">
+        <h1 className="page-title">SmartFarm Crop Dashboard</h1>
+        <div className="error-state">
+          <p>Crop cards could not be loaded: {cropError}</p>
+          <button className="btn" onClick={loadCrops}>Retry</button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -181,6 +226,16 @@ function App() {
         </div>
       </div>
 
+      {sensorError && (
+        <div className="dashboard-message error-message">
+          {readingsHaveLoaded ? `Sensor refresh failed: ${sensorError}` : `Sensor Feed Unavailable: ${sensorError}`}
+        </div>
+      )}
+
+      {feedback && (
+        <div className="dashboard-message success-message">{feedback}</div>
+      )}
+
       {dashError && (
         <div className="modal-overlay" onClick={() => setDashError('')}>
           <div className="alert-card" onClick={e => e.stopPropagation()}>
@@ -206,7 +261,7 @@ function App() {
                 <label className="full-width">
                   Crop Name
                   <select name="crop_name" value={form.crop_name} onChange={handleChange} required>
-                    <option value="" disabled>{`Available Crops (${availableNames.length})`}</option>
+                    <option value="" disabled>{`Select a crop...`}</option>
                     {availableNames.map(name => <option key={name} value={name}>{name}</option>)}
                   </select>
                 </label>
@@ -321,7 +376,9 @@ function App() {
         </div>
       )}
 
-      {crops.length > 0 && (
+      {crops.length === 0 ? (
+        <div className="empty-state">No Crop Cards. Add a Crop Card to get started.</div>
+      ) : (
         <div className="crop-grid">
           {results.map(result => {
             const { crop, latest_reading, condition, recommended_water, alerts, action } = result;
@@ -362,11 +419,22 @@ function App() {
                         <Reading label="Rainfall" value={`${latest_reading.rainfall} mm`} good={latest_reading.rainfall < 5} />
                         <Reading label="Sensor" value={latest_reading.sensor_status} good={latest_reading.sensor_status === 'Online'} />
                       </>
-                    ) : <p>No data</p>}
+                    ) : (
+                      <>
+                        <Reading label="Latest" value="N/A" />
+                        <Reading label="Soil Moisture" value="N/A" />
+                        <Reading label="Temperature" value="N/A" />
+                        <Reading label="Rainfall" value="N/A" />
+                        <Reading label="Sensor" value="N/A" />
+                      </>
+                    )}
                   </div>
 
                   <div>
                     <h3>Corrective Measures</h3>
+                    <p className="recommended-water">
+                      Recommended water: {typeof recommended_water === 'number' ? `${recommended_water} L` : 'N/A'}
+                    </p>
                     <ul className="measures">
                       {measures.map((measure, i) => <li key={i}>{measure}</li>)}
                     </ul>
@@ -374,7 +442,7 @@ function App() {
                 </div>
 
                 <div className="card-actions">
-                  <button className="btn" onClick={() => openEdit(crop)}>Modify</button>
+                  <button className="btn" onClick={() => openEdit(crop)}>Edit</button>
                   <button className="btn" onClick={() => setHistoryCrop(crop)}>View History</button>
                   <button className="btn danger" onClick={() => removeCrop(crop)}>Delete</button>
                 </div>

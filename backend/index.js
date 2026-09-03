@@ -57,6 +57,14 @@ function validateCropUpdate(data) {
   return '';
 }
 
+function isDuplicateCropError(err) {
+  return (
+    err &&
+    typeof err.message === 'string' &&
+    err.message.includes('UNIQUE constraint failed: crops.crop_name')
+  );
+}
+
 // CREATE
 app.post('/api/crops', (req, res) => {
   const {
@@ -73,7 +81,23 @@ app.post('/api/crops', (req, res) => {
     return res.status(400).json({ error: validationError });
   }
 
+  let readings;
   try {
+    readings = readValidatedReadings();
+  } catch (err) {
+    return res.status(500).json({ error: 'Sensor data file is invalid' });
+  }
+
+  if (!readings.some(reading => reading.crop_name === crop_name)) {
+    return res.status(400).json({ error: 'crop_name does not exist in sensor data' });
+  }
+
+  try {
+    const existing = db.prepare('SELECT id FROM crops WHERE crop_name = ?').get(crop_name);
+    if (existing) {
+      return res.status(409).json({ error: 'crop_name already exists' });
+    }
+
     const stmt = db.prepare(`
       INSERT INTO crops (
         crop_name, location,
@@ -88,7 +112,7 @@ app.post('/api/crops', (req, res) => {
       target_min,
       target_max,
       normal_water,
-      notes ?? null,
+      notes ?? '',
     );
 
     const newRecord = db
@@ -97,7 +121,10 @@ app.post('/api/crops', (req, res) => {
 
     res.status(201).json(newRecord);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    if (err.message.includes('UNIQUE constraint failed')) {
+      return res.status(409).json({ error: 'crop_name already exists' });
+    }
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -114,7 +141,7 @@ app.get('/api/crops/:id', (req, res) => {
     .get(req.params.id);
 
   if (!record) {
-    return res.status(404).json({ error: 'Crop not found' });
+    return res.status(404).json({ error: 'Crop card not found' });
   }
 
   res.json(record);
@@ -129,6 +156,18 @@ app.put('/api/crops/:id', (req, res) => {
     normal_water,
     notes,
   } = req.body;
+
+  const existing = db
+    .prepare('SELECT * FROM crops WHERE id = ?')
+    .get(req.params.id);
+
+  if (!existing) {
+    return res.status(404).json({ error: 'Crop card not found' });
+  }
+
+  if (req.body.crop_name !== undefined && req.body.crop_name !== existing.crop_name) {
+    return res.status(400).json({ error: 'crop_name cannot be changed' });
+  }
 
   const validationError = validateCropUpdate({ location, target_min, target_max, normal_water, notes });
   if (validationError !== '') {
@@ -147,12 +186,12 @@ app.put('/api/crops/:id', (req, res) => {
       target_min,
       target_max,
       normal_water,
-      notes ?? null,
+      notes ?? '',
       req.params.id
     );
 
     if (result.changes === 0) {
-      return res.status(404).json({ error: 'Crop not found' });
+      return res.status(404).json({ error: 'Crop card not found' });
     }
 
     const updated = db
@@ -161,7 +200,7 @@ app.put('/api/crops/:id', (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -171,11 +210,12 @@ app.delete('/api/crops/:id', (req, res) => {
   const result = stmt.run(req.params.id);
 
   if (result.changes === 0) {
-    return res.status(404).json({ error: 'Crop not found' });
+    return res.status(404).json({ error: 'Crop card not found' });
   }
 
-  res.status(204).send();
+  res.status(200).json({ deleted: true, id: Number(req.params.id) });
 });
+
 
 app.get('/api/readings', (req, res) => {
   try {

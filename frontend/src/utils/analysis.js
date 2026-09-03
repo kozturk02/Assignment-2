@@ -33,6 +33,33 @@ export function analyseCrop(crop, reading) {
     };
   }
 
+  if (reading.soil_moisture < 0 || reading.soil_moisture > 100) {
+    return {
+      condition: 'Invalid Data',
+      recommended_water: 'N/A',
+      alerts: ['Invalid soil_moisture'],
+      action: 'Check reading'
+    };
+  }
+
+  if (reading.temperature < 0 || reading.temperature > 50) {
+    return {
+      condition: 'Invalid Data',
+      recommended_water: 'N/A',
+      alerts: ['Invalid temperature'],
+      action: 'Check reading'
+    };
+  }
+
+  if (reading.rainfall < 0 || reading.rainfall > 50) {
+    return {
+      condition: 'Invalid Data',
+      recommended_water: 'N/A',
+      alerts: ['Invalid rainfall'],
+      action: 'Check reading'
+    };
+  }
+
   let condition = 'Healthy';
   let water = 0;
   let action = 'Monitor';
@@ -69,7 +96,14 @@ export function analyseCrop(crop, reading) {
 export function calculateFarmStatus(results) {
   if (results.length === 0) return 'No Crops';
 
-  if (results.some((r) => r.condition === 'Sensor Problem')) {
+  if (results.some((r) => r.condition === 'N/A')) {
+    return 'Sensor Feed Unavailable';
+  }
+
+  if (results.some(
+      (r) => r.condition === 'Sensor Problem' || r.condition === 'Invalid Data'
+    )
+  ) {
     return 'Critical';
   }
 

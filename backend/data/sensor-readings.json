@@ -65,7 +65,7 @@
 {
 "crop_name": "Lettuce",
 "timestamp": "2026-09-02T10:00:00",
-"soil_moisture": 50,
+"soil_moisture": 65,
 "temperature": 23,
 "rainfall": 1,
 "sensor_status": "Online",
