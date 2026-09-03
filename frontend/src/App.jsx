@@ -220,12 +220,15 @@ function App() {
           <span className="summary-value">{lastRefresh ? lastRefresh.toLocaleTimeString() : 'Never'}</span>
         </div>
 
+        <center>
         {sensorError && (
           <div className="dashboard-message error-message">
             <strong>{readingsHaveLoaded ? "Sensor refresh failed" : "Sensor Feed Unavailable"}</strong>
             <div>{`${sensorError}`}</div>
           </div>
         )}
+
+        </center>
 
         <div className="summary-actions">
           <button className="btn primary" onClick={openAdd} disabled={!readingsHaveLoaded}>+ Add Crop Card</button>
@@ -448,7 +451,7 @@ function App() {
                   <div>
                     <h3>Corrective Measures</h3>
                     <p className="recommended-water">
-                      Recommended water: {typeof recommended_water === 'number' ? `${recommended_water} L` : 'N/A'}
+                      Water: {typeof recommended_water === 'number' ? `${recommended_water} L` : 'N/A'}
                     </p>
                     <ul className="measures">
                       {measures.map((measure, i) => <li key={i}>{measure}</li>)}
