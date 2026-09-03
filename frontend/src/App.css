@@ -389,13 +389,14 @@ body {
 }
 
 .alert-card {
-  background: #ff000065;
+  background: #ff525279;
   border-radius: 16px;
   padding: 20px 24px;
   max-width: 400px;
   width: 100%;
   text-align: center;
   animation: alert-pop 0.18s ease;
+  margin-bottom: 50px;
 }
 
 @keyframes alert-pop {
@@ -420,6 +421,9 @@ body {
 .alert-card__title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #14151A;
+  background: white;
+  color: #6d0000;
   margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 10%;
 }
